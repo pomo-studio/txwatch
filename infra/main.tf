@@ -19,7 +19,7 @@ data "aws_region" "primary" {
 
 module "ssr" {
   source  = "pomo-studio/serverless-ssr/aws"
-  version = "~> 2.2"
+  version = "~> 2.3"
 
   providers = {
     aws.primary = aws.primary
