@@ -28,12 +28,12 @@ export function response(ctx) {
   let riskSum = 0;
   let latencySum = 0;
 
-  for (const item of items) {
-    totalVolume += parseFloat(item.amount) || 0;
-    if (item.fraudFlag) fraudCount++;
-    riskSum += parseInt(item.riskScore) || 0;
-    latencySum += parseInt(item.processingLatencyMs) || 0;
-  }
+  items.forEach(function(item) {
+    totalVolume += item.amount || 0;
+    if (item.fraudFlag) fraudCount += 1;
+    riskSum += item.riskScore || 0;
+    latencySum += item.processingLatencyMs || 0;
+  });
 
   return {
     totalCount,

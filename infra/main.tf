@@ -286,7 +286,7 @@ module "ingest_pipeline" {
   source  = "pomo-studio/event-pipeline/aws"
   version = "~> 1.1"
 
-  name = "txwatch"
+  name = "txwatch-enricher"
 
   create_event_bus = true
 
@@ -479,7 +479,7 @@ resource "aws_scheduler_schedule" "generator" {
     mode = "OFF"
   }
 
-  schedule_expression = "rate(30 seconds)"
+  schedule_expression = "rate(1 minute)"
 
   target {
     arn      = aws_lambda_function.generator.arn
