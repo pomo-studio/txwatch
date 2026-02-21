@@ -134,31 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { signOut as amplifySignOut, getCurrentUser } from 'aws-amplify/auth'
-import { Amplify } from 'aws-amplify'
 import type { Transaction } from '~/composables/useTransactions'
-
-const config = useRuntimeConfig()
-
-// Configure Amplify on client
-if (import.meta.client) {
-  Amplify.configure({
-    Auth: {
-      Cognito: {
-        userPoolId:       config.public.cognitoRegion + '_' + config.public.cognitoClientId,
-        userPoolClientId: config.public.cognitoClientId,
-        loginWith: { email: true }
-      }
-    },
-    API: {
-      GraphQL: {
-        endpoint: config.public.appsyncUrl,
-        region:   config.public.cognitoRegion,
-        defaultAuthMode: 'userPool'
-      }
-    }
-  })
-}
 
 // SSR: load initial transactions from AppSync via API key
 const { data: initial } = await useFetch('/api/txfeed')
@@ -231,7 +207,7 @@ function formatTime(iso: string): string {
 }
 
 async function signOut() {
-  await amplifySignOut()
+  await fetch('/api/auth/signout', { method: 'POST' })
   await navigateTo('/login')
 }
 </script>
