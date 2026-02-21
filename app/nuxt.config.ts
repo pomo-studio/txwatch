@@ -9,6 +9,13 @@ export default defineNuxtConfig({
     awsLambda: {
       streaming: false
     },
+    // Don't bundle AWS SDK packages — Nitro's rollup corrupts @aws-crypto's SHA-256
+    // implementation, producing wrong HMAC output for SigV4. Marking as externals
+    // causes Nitro to include them as proper node_modules in the deployment zip,
+    // bypassing rollup entirely so the Lambda uses the correctly compiled crypto.
+    externals: {
+      external: ['@aws-sdk/client-eventbridge']
+    },
     routeRules: {
       // Dashboard is auth-gated and real-time — never cache
       '/':        { headers: { 'Cache-Control': 'no-store, private' } },
