@@ -1,7 +1,4 @@
-import {
-  CognitoIdentityProviderClient,
-  AdminInitiateAuthCommand,
-} from '@aws-sdk/client-cognito-identity-provider'
+import { cognitoCall } from '~/server/utils/cognito'
 
 export default defineEventHandler(async (event) => {
   const { email, password } = await readBody(event)
@@ -12,41 +9,22 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig()
 
-  // AdminInitiateAuth requires IAM signing. The Lambda execution role has
-  // cognito-idp:AdminInitiateAuth permission. Credentials are read explicitly
-  // from Lambda environment variables to avoid credential provider chain issues
-  // when bundled by Nitro.
-  const cognito = new CognitoIdentityProviderClient({
-    region: config.cognitoRegion,
-    credentials: {
-      accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      sessionToken:    process.env.AWS_SESSION_TOKEN,
+  // InitiateAuth with USER_PASSWORD_AUTH is a public Cognito operation.
+  // No IAM signing required — cognitoCall uses plain fetch.
+  const result = await cognitoCall(config.cognitoRegion, 'InitiateAuth', {
+    AuthFlow: 'USER_PASSWORD_AUTH',
+    ClientId: config.cognitoClientId,
+    AuthParameters: {
+      USERNAME: email,
+      PASSWORD: password,
     },
   })
 
-  try {
-    const result = await cognito.send(new AdminInitiateAuthCommand({
-      UserPoolId: config.cognitoUserPoolId,
-      ClientId:   config.cognitoClientId,
-      AuthFlow:   'USER_PASSWORD_AUTH',
-      AuthParameters: { USERNAME: email, PASSWORD: password },
-    }))
+  const { IdToken, RefreshToken } = result.AuthenticationResult
+  const cookieBase = { httpOnly: true, secure: true, sameSite: 'lax' as const, path: '/' }
 
-    const { IdToken, RefreshToken } = result.AuthenticationResult!
-    const cookieBase = { httpOnly: true, secure: true, sameSite: 'lax' as const, path: '/' }
+  setCookie(event, 'txwatch_token',   IdToken,      { ...cookieBase, maxAge: 3600 })
+  setCookie(event, 'txwatch_refresh', RefreshToken, { ...cookieBase, maxAge: 30 * 24 * 3600 })
 
-    setCookie(event, 'txwatch_token',   IdToken!,      { ...cookieBase, maxAge: 3600 })
-    setCookie(event, 'txwatch_refresh', RefreshToken!, { ...cookieBase, maxAge: 30 * 24 * 3600 })
-
-    return { ok: true }
-  } catch (e: any) {
-    const msg: Record<string, string> = {
-      NotAuthorizedException:    'Incorrect email or password',
-      UserNotConfirmedException: 'Please verify your email before signing in',
-      UserNotFoundException:     'Incorrect email or password',
-      PasswordResetRequiredException: 'Password reset required',
-    }
-    throw createError({ statusCode: 401, message: msg[e.name] ?? 'Sign in failed' })
-  }
+  return { ok: true }
 })

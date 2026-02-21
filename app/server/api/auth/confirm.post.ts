@@ -1,7 +1,3 @@
-import {
-  CognitoIdentityProviderClient,
-  AdminInitiateAuthCommand,
-} from '@aws-sdk/client-cognito-identity-provider'
 import { cognitoCall } from '~/server/utils/cognito'
 
 export default defineEventHandler(async (event) => {
@@ -24,29 +20,22 @@ export default defineEventHandler(async (event) => {
     return { ok: true, signedIn: false }
   }
 
-  // Auto sign-in uses AdminInitiateAuth — requires IAM signing
+  // Auto sign-in after confirmation — also a public operation via InitiateAuth
   try {
-    const cognito = new CognitoIdentityProviderClient({
-      region: config.cognitoRegion,
-      credentials: {
-        accessKeyId:     process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        sessionToken:    process.env.AWS_SESSION_TOKEN,
+    const result = await cognitoCall(config.cognitoRegion, 'InitiateAuth', {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: config.cognitoClientId,
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password,
       },
     })
 
-    const result = await cognito.send(new AdminInitiateAuthCommand({
-      UserPoolId: config.cognitoUserPoolId,
-      ClientId:   config.cognitoClientId,
-      AuthFlow:   'USER_PASSWORD_AUTH',
-      AuthParameters: { USERNAME: email, PASSWORD: password },
-    }))
-
-    const { IdToken, RefreshToken } = result.AuthenticationResult!
+    const { IdToken, RefreshToken } = result.AuthenticationResult
     const cookieBase = { httpOnly: true, secure: true, sameSite: 'lax' as const, path: '/' }
 
-    setCookie(event, 'txwatch_token',   IdToken!,      { ...cookieBase, maxAge: 3600 })
-    setCookie(event, 'txwatch_refresh', RefreshToken!, { ...cookieBase, maxAge: 30 * 24 * 3600 })
+    setCookie(event, 'txwatch_token',   IdToken,      { ...cookieBase, maxAge: 3600 })
+    setCookie(event, 'txwatch_refresh', RefreshToken, { ...cookieBase, maxAge: 30 * 24 * 3600 })
 
     return { ok: true, signedIn: true }
   } catch {
