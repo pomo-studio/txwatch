@@ -321,6 +321,29 @@ module "ingest_pipeline" {
   depends_on = [aws_dynamodb_table.transactions, module.api]
 }
 
+# Grant enricher Lambda permission to write enriched transactions to DynamoDB
+resource "aws_iam_role_policy" "enricher_dynamodb" {
+  provider = aws.primary
+  name     = "txwatch-enricher-dynamodb"
+  role     = element(split("/", module.ingest_pipeline.lambda_role_arn), 1)
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "WriteTransactions"
+      Effect = "Allow"
+      Action = [
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:GetItem"
+      ]
+      Resource = aws_dynamodb_table.transactions.arn
+    }]
+  })
+
+  depends_on = [module.ingest_pipeline, aws_dynamodb_table.transactions]
+}
+
 # Grant enricher Lambda permission to call AppSync notifyTransaction mutation
 resource "aws_iam_role_policy" "enricher_appsync" {
   provider = aws.primary
