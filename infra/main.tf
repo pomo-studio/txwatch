@@ -41,6 +41,27 @@ module "ssr" {
   }
 }
 
+# Grant SSR Lambda permission to call AdminInitiateAuth on the Cognito user pool.
+# USER_PASSWORD_AUTH via InitiateAuth requires IAM signing when called from AWS;
+# AdminInitiateAuth is the correct server-side auth API and explicitly requires it.
+resource "aws_iam_role_policy" "ssr_cognito" {
+  provider = aws.primary
+  name     = "txwatch-ssr-cognito"
+  role     = "txwatch-lambda-role"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "AdminAuth"
+      Effect   = "Allow"
+      Action   = ["cognito-idp:AdminInitiateAuth", "cognito-idp:AdminGetUser"]
+      Resource = aws_cognito_user_pool.main.arn
+    }]
+  })
+
+  depends_on = [module.ssr]
+}
+
 # Grant SSR Lambda permission to publish to txwatch-bus
 resource "aws_iam_role_policy" "ssr_eventbridge" {
   provider = aws.primary
