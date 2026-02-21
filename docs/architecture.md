@@ -116,4 +116,5 @@ Rule-based, explainable, no ML dependency:
 - TFC workspace → AWS via `terraform-cloud-txwatch` role (scoped to `workspace:txwatch`)
 - GitHub Actions → AWS via `github-actions-txwatch` role (deploy-only)
 - AppSync API key lives in Lambda environment only — never sent to browser
-- Cognito JWT stored in memory by Amplify (browser), access token in httpOnly cookie (SSR)
+- Cognito JWT stored in httpOnly cookie (server-side auth via AWS SDK — no Amplify)
+- AppSync token fetched from `/api/auth/me` on mount, held in memory only — never in localStorage or readable cookies
