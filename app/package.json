@@ -11,7 +11,6 @@
     "build:lambda": "NITRO_PRESET=aws-lambda npm run build"
   },
   "dependencies": {
-    "@aws-sdk/client-eventbridge": "^3.500.0",
     "nuxt": "^3.10.0",
     "vue": "^3.4.0",
     "vue-router": "^4.2.0"

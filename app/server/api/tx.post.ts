@@ -4,12 +4,8 @@
  * The event is then routed → SQS → enricher Lambda → DynamoDB → AppSync subscription.
  */
 
-import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge'
 import crypto from 'node:crypto'
-
-const ebClient = new EventBridgeClient({
-  region: process.env.AWS_REGION || 'us-east-1'
-})
+import { putEvents } from '../utils/eventbridge'
 
 const VALID_CATEGORIES = ['grocery', 'restaurant', 'gas', 'travel', 'atm', 'online'] as const
 
@@ -52,20 +48,12 @@ export default defineEventHandler(async (event) => {
     publishedAt: Date.now()
   }
 
-  const command = new PutEventsCommand({
-    Entries: [{
-      EventBusName: config.eventBusName || process.env.EVENT_BUS_NAME,
-      Source:       'txwatch.transactions',
-      DetailType:   'Transaction Created',
-      Detail:       JSON.stringify(detail)
-    }]
-  })
-
-  const result = await ebClient.send(command)
-
-  if (result.FailedEntryCount && result.FailedEntryCount > 0) {
-    throw createError({ statusCode: 502, statusMessage: 'EventBridge PutEvents failed' })
-  }
+  await putEvents([{
+    EventBusName: config.eventBusName || process.env.EVENT_BUS_NAME || '',
+    Source:       'txwatch.transactions',
+    DetailType:   'Transaction Created',
+    Detail:       JSON.stringify(detail)
+  }])
 
   return {
     success: true,
