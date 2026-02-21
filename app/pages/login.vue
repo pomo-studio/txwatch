@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-canvas flex items-center justify-center px-4">
     <div class="w-full max-w-sm">
+
       <!-- Header -->
       <div class="mb-8">
         <p class="text-xs font-display tracking-widest2 text-ink/40 uppercase mb-2">postmodern.</p>
@@ -13,176 +14,201 @@
         {{ error }}
       </div>
 
-      <!-- Login form -->
-      <form @submit.prevent="handleSubmit" class="space-y-4">
-        <div>
-          <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Email</label>
-          <input
-            v-model="email"
-            type="email"
-            required
-            autocomplete="email"
-            class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Password</label>
-          <input
-            v-model="password"
-            type="password"
-            required
-            autocomplete="current-password"
-            class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink"
-          />
-        </div>
-
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full py-2 bg-ink text-canvas text-sm font-display tracking-wide hover:bg-ink/80 disabled:opacity-50 transition-opacity"
-        >
-          {{ loading ? 'Signing in...' : 'Sign in' }}
-        </button>
-      </form>
-
-      <!-- Sign up link -->
-      <div class="mt-6 text-center">
-        <span class="text-xs text-ink/40">No account? </span>
-        <button @click="showSignUp = true" class="text-xs text-ink underline">Create one</button>
+      <!-- Success -->
+      <div v-if="success" class="mb-4 px-3 py-2 bg-emerald-50 text-emerald-700 text-sm">
+        {{ success }}
       </div>
 
-      <!-- Sign up form -->
-      <div v-if="showSignUp" class="mt-8 pt-8 border-t border-ink/10">
-        <h2 class="text-sm font-display font-medium mb-4">Create account</h2>
-        <form @submit.prevent="handleSignUp" class="space-y-4">
+      <!-- Sign in -->
+      <template v-if="mode === 'login'">
+        <form @submit.prevent="handleSignIn" class="space-y-4">
           <div>
             <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Email</label>
             <input
-              v-model="signupEmail"
+              v-model="email"
               type="email"
               required
+              autocomplete="email"
               class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink"
             />
           </div>
           <div>
             <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Password</label>
             <input
-              v-model="signupPassword"
+              v-model="password"
               type="password"
               required
-              minlength="8"
+              autocomplete="current-password"
               class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink"
             />
           </div>
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-2 bg-ink text-canvas text-sm font-display tracking-wide hover:bg-ink/80 disabled:opacity-50"
+            class="w-full py-2 bg-ink text-canvas text-sm font-display tracking-wide hover:bg-ink/80 disabled:opacity-50 transition-opacity"
           >
-            {{ loading ? 'Creating...' : 'Create account' }}
+            {{ loading ? 'Signing in…' : 'Sign in' }}
           </button>
         </form>
+        <div class="mt-6 text-center">
+          <span class="text-xs text-ink/40">No account? </span>
+          <button @click="switchTo('signup')" class="text-xs text-ink underline">Create one</button>
+        </div>
+      </template>
 
-        <!-- Confirmation code -->
-        <div v-if="needsConfirmation" class="mt-4">
-          <p class="text-xs text-ink/60 mb-2">Check your email for a confirmation code.</p>
-          <form @submit.prevent="handleConfirm" class="space-y-3">
+      <!-- Sign up -->
+      <template v-else-if="mode === 'signup'">
+        <form @submit.prevent="handleSignUp" class="space-y-4">
+          <div>
+            <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Email</label>
             <input
-              v-model="confirmCode"
+              v-model="email"
+              type="email"
+              required
+              autocomplete="email"
+              class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Password</label>
+            <input
+              v-model="password"
+              type="password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink"
+            />
+            <p class="mt-1 text-xs text-ink/40">Min 8 chars · uppercase · number</p>
+          </div>
+          <button
+            type="submit"
+            :disabled="loading"
+            class="w-full py-2 bg-ink text-canvas text-sm font-display tracking-wide hover:bg-ink/80 disabled:opacity-50 transition-opacity"
+          >
+            {{ loading ? 'Creating account…' : 'Create account' }}
+          </button>
+        </form>
+        <div class="mt-6 text-center">
+          <button @click="switchTo('login')" class="text-xs text-ink/50 hover:text-ink underline">
+            Back to sign in
+          </button>
+        </div>
+      </template>
+
+      <!-- Confirm -->
+      <template v-else-if="mode === 'confirm'">
+        <p class="text-sm text-ink/60 mb-4">
+          A verification code was sent to <strong class="text-ink">{{ email }}</strong>.
+        </p>
+        <form @submit.prevent="handleConfirm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-display tracking-wide text-ink/60 mb-1">Verification code</label>
+            <input
+              v-model="code"
               type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
               placeholder="000000"
+              required
               class="w-full px-3 py-2 border border-ink/20 bg-white text-ink text-sm focus:outline-none focus:border-ink text-center tracking-widest"
             />
-            <button
-              type="submit"
-              :disabled="loading"
-              class="w-full py-2 bg-ink text-canvas text-sm font-display disabled:opacity-50"
-            >
-              Confirm
-            </button>
-          </form>
+          </div>
+          <button
+            type="submit"
+            :disabled="loading"
+            class="w-full py-2 bg-ink text-canvas text-sm font-display disabled:opacity-50 transition-opacity"
+          >
+            {{ loading ? 'Verifying…' : 'Verify & sign in' }}
+          </button>
+        </form>
+        <div class="mt-4 text-center">
+          <button @click="switchTo('login')" class="text-xs text-ink/50 hover:text-ink underline">
+            Back to sign in
+          </button>
         </div>
-      </div>
+      </template>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Amplify } from 'aws-amplify'
-import { signIn, signUp, confirmSignUp } from 'aws-amplify/auth'
+type Mode = 'login' | 'signup' | 'confirm'
 
-const config = useRuntimeConfig()
-
-// Configure Amplify on client
-onMounted(() => {
-  Amplify.configure({
-    Auth: {
-      Cognito: {
-        userPoolId:       `${config.public.cognitoRegion}_${config.public.cognitoClientId}`.replace(/_.+$/, '') + '_' + config.public.cognitoClientId,
-        userPoolClientId: config.public.cognitoClientId,
-        loginWith: { username: false, email: true }
-      }
-    }
-  })
-})
-
-const email = ref('')
+const mode     = ref<Mode>('login')
+const email    = ref('')
 const password = ref('')
-const signupEmail = ref('')
-const signupPassword = ref('')
-const confirmCode = ref('')
-const error = ref('')
-const loading = ref(false)
-const showSignUp = ref(false)
-const needsConfirmation = ref(false)
+const code     = ref('')
+const error    = ref('')
+const success  = ref('')
+const loading  = ref(false)
 
-async function handleSubmit() {
-  error.value = ''
+function switchTo(next: Mode) {
+  error.value   = ''
+  success.value = ''
+  mode.value    = next
+}
+
+async function post(url: string, body: Record<string, string>) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.message ?? 'Request failed')
+  return data
+}
+
+async function handleSignIn() {
+  error.value   = ''
   loading.value = true
   try {
-    const result = await signIn({ username: email.value, password: password.value })
-    if (result.isSignedIn) {
-      await navigateTo('/')
-    }
+    await post('/api/auth/signin', { email: email.value, password: password.value })
+    await navigateTo('/')
   } catch (e: any) {
-    error.value = e.message || 'Sign in failed'
+    error.value = e.message
   } finally {
     loading.value = false
   }
 }
 
 async function handleSignUp() {
-  error.value = ''
+  error.value   = ''
   loading.value = true
   try {
-    const result = await signUp({
-      username: signupEmail.value,
-      password: signupPassword.value,
-      options: { userAttributes: { email: signupEmail.value } }
-    })
-    if (result.nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
-      needsConfirmation.value = true
+    const res = await post('/api/auth/signup', { email: email.value, password: password.value })
+    if (res.needsConfirmation) {
+      mode.value = 'confirm'
+    } else {
+      // Auto-confirmed (e.g. admin-created accounts)
+      await navigateTo('/')
     }
   } catch (e: any) {
-    error.value = e.message || 'Sign up failed'
+    error.value = e.message
   } finally {
     loading.value = false
   }
 }
 
 async function handleConfirm() {
-  error.value = ''
+  error.value   = ''
   loading.value = true
   try {
-    await confirmSignUp({ username: signupEmail.value, confirmationCode: confirmCode.value })
-    // Auto sign in after confirmation
-    const result = await signIn({ username: signupEmail.value, password: signupPassword.value })
-    if (result.isSignedIn) {
+    const res = await post('/api/auth/confirm', {
+      email:    email.value,
+      password: password.value,
+      code:     code.value,
+    })
+    if (res.signedIn) {
       await navigateTo('/')
+    } else {
+      success.value = 'Account confirmed! Please sign in.'
+      switchTo('login')
     }
   } catch (e: any) {
-    error.value = e.message || 'Confirmation failed'
+    error.value = e.message
   } finally {
     loading.value = false
   }

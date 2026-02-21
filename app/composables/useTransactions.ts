@@ -1,65 +1,51 @@
 /**
  * useTransactions composable
- * Manages the real-time transaction feed via AppSync WebSocket subscription.
- * Prepends new transactions from the subscription to the SSR-hydrated initial list.
- * Bounds the feed to 50 items max.
+ * Real-time transaction feed via AppSync WebSocket subscription.
+ * Uses the AppSync graphql-ws protocol directly — no Amplify dependency.
+ * Token is fetched server-side via /api/auth/me and kept in memory only.
  */
 
-import { Amplify } from 'aws-amplify'
-import { generateClient } from 'aws-amplify/api'
-import { getCurrentUser } from 'aws-amplify/auth'
-
 export interface Transaction {
-  transactionId: string
-  amount: number
-  currency: string
-  merchant: string
-  category: string
-  status: string
-  riskScore: number
-  fraudFlag: boolean
-  source: string
-  processingRegion: string
+  transactionId:       string
+  amount:              number
+  currency:            string
+  merchant:            string
+  category:            string
+  status:              string
+  riskScore:           number
+  fraudFlag:           boolean
+  source:              string
+  processingRegion:    string
   processingLatencyMs: number
-  eventId: string
-  createdAt: string
+  eventId:             string
+  createdAt:           string
 }
 
-const ON_TRANSACTION_ADDED = /* GraphQL */ `
+const ON_TRANSACTION_ADDED = `
   subscription OnTransactionAdded {
     onTransactionAdded {
-      transactionId
-      amount
-      currency
-      merchant
-      category
-      status
-      riskScore
-      fraudFlag
-      source
-      processingRegion
-      processingLatencyMs
-      eventId
-      createdAt
+      transactionId amount currency merchant category
+      status riskScore fraudFlag source processingRegion
+      processingLatencyMs eventId createdAt
     }
   }
 `
 
 const MAX_FEED_SIZE = 50
+const SUB_ID = '1'
 
 export function useTransactions(initialItems: Transaction[] = []) {
-  const config = useRuntimeConfig()
+  const config       = useRuntimeConfig()
   const transactions = ref<Transaction[]>(initialItems)
-  let subscription: ReturnType<typeof generateClient>['graphql'] | null = null
-  let client: ReturnType<typeof generateClient> | null = null
+  let ws: WebSocket | null = null
 
-  function riskClass(score: number): string {
+  function riskClass(score: number) {
     if (score > 90) return 'risk-high'
     if (score > 70) return 'risk-medium'
     return 'risk-low'
   }
 
-  function riskLabel(score: number): string {
+  function riskLabel(score: number) {
     if (score > 90) return 'FLAGGED'
     if (score > 70) return 'HIGH RISK'
     return 'OK'
@@ -68,63 +54,87 @@ export function useTransactions(initialItems: Transaction[] = []) {
   async function startSubscription() {
     if (!import.meta.client) return
 
+    // Fetch the ID token from the server — it stays in an httpOnly cookie,
+    // this endpoint is the only path from cookie → memory.
+    let idToken: string
     try {
-      Amplify.configure({
-        API: {
-          GraphQL: {
-            endpoint: config.public.appsyncUrl,
-            region:   config.public.cognitoRegion,
-            defaultAuthMode: 'userPool'
-          }
-        },
-        Auth: {
-          Cognito: {
-            userPoolId:       config.public.cognitoRegion + '_' + config.public.cognitoClientId.split('_')[0],
-            userPoolClientId: config.public.cognitoClientId
-          }
-        }
-      })
+      const res = await fetch('/api/auth/me')
+      if (!res.ok) return
+      const data = await res.json()
+      idToken = data.idToken
+    } catch {
+      return
+    }
 
-      client = generateClient()
+    // Derive the API host from the HTTPS AppSync URL (needed in auth headers)
+    const apiHost = new URL(config.public.appsyncUrl).host
 
-      // Verify user is authenticated before subscribing
-      await getCurrentUser()
+    // AppSync WebSocket connection URL:
+    // wss://<realtime-endpoint>?header=<b64(auth)>&payload=<b64({})>
+    const header  = btoa(JSON.stringify({ Authorization: idToken, host: apiHost }))
+    const payload = btoa('{}')
+    const wsUrl   = `${config.public.appsyncRealtimeUrl}?header=${header}&payload=${payload}`
 
-      const sub = (client.graphql({
-        query: ON_TRANSACTION_ADDED,
-        authMode: 'userPool'
-      }) as any)
+    ws = new WebSocket(wsUrl, ['graphql-ws'])
 
-      if (typeof sub.subscribe === 'function') {
-        sub.subscribe({
-          next: ({ data }: any) => {
-            const tx: Transaction = data?.onTransactionAdded
-            if (!tx) return
+    ws.onopen = () => {
+      ws!.send(JSON.stringify({ type: 'connection_init' }))
+    }
 
+    ws.onmessage = (event) => {
+      let msg: any
+      try { msg = JSON.parse(event.data) } catch { return }
+
+      switch (msg.type) {
+        case 'connection_ack':
+          // Connection established — start the subscription
+          ws!.send(JSON.stringify({
+            id:      SUB_ID,
+            type:    'start',
+            payload: {
+              data:       JSON.stringify({ query: ON_TRANSACTION_ADDED }),
+              extensions: {
+                authorization: { Authorization: idToken, host: apiHost }
+              },
+            },
+          }))
+          break
+
+        case 'data': {
+          const tx: Transaction = msg.payload?.data?.onTransactionAdded
+          if (tx) {
             transactions.value = [tx, ...transactions.value].slice(0, MAX_FEED_SIZE)
-          },
-          error: (err: Error) => {
-            console.warn('[useTransactions] subscription error:', err.message)
           }
-        })
+          break
+        }
+
+        case 'ka':
+          // Keep-alive — no action needed
+          break
+
+        case 'error':
+          console.warn('[useTransactions] subscription error:', msg.payload)
+          break
       }
-    } catch (err) {
-      console.warn('[useTransactions] failed to start subscription:', err)
+    }
+
+    ws.onerror = () => {
+      console.warn('[useTransactions] WebSocket error')
     }
   }
 
   function stopSubscription() {
-    if (subscription && typeof (subscription as any)?.unsubscribe === 'function') {
-      (subscription as any).unsubscribe()
+    if (ws) {
+      try {
+        ws.send(JSON.stringify({ id: SUB_ID, type: 'stop' }))
+        ws.close()
+      } catch { /* already closed */ }
+      ws = null
     }
   }
 
   onMounted(() => startSubscription())
   onUnmounted(() => stopSubscription())
 
-  return {
-    transactions,
-    riskClass,
-    riskLabel
-  }
+  return { transactions, riskClass, riskLabel }
 }

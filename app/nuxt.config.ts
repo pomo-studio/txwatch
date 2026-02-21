@@ -21,20 +21,20 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Private (server-only)
+    // Private (server-only) — never exposed to the browser
     appsyncApiKey:      process.env.APPSYNC_API_KEY      || '',
     cognitoUserPoolId:  process.env.COGNITO_USER_POOL_ID || '',
+    cognitoClientId:    process.env.COGNITO_CLIENT_ID    || '',
+    cognitoRegion:      process.env.COGNITO_REGION       || 'us-east-1',
     eventBusName:       process.env.EVENT_BUS_NAME       || '',
     primaryRegion:      process.env.PRIMARY_REGION       || 'us-east-1',
     dynamodbTable:      process.env.DYNAMODB_TABLE        || 'txwatch-transactions',
 
-    // Public (exposed to client)
+    // Public (exposed to client) — AppSync endpoints only; no Cognito config client-side
     public: {
       appName:            'TxWatch',
-      appsyncUrl:         process.env.APPSYNC_URL         || '',
-      appsyncRealtimeUrl: process.env.APPSYNC_REALTIME_URL || '',
-      cognitoClientId:    process.env.COGNITO_CLIENT_ID   || '',
-      cognitoRegion:      process.env.COGNITO_REGION      || 'us-east-1',
+      appsyncUrl:         process.env.APPSYNC_URL          || '',
+      appsyncRealtimeUrl: process.env.APPSYNC_REALTIME_URL  || '',
     }
   },
 
