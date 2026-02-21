@@ -1,0 +1,66 @@
+type Transaction {
+  transactionId: ID!
+  amount: Float!
+  currency: String!
+  merchant: String!
+  category: String!
+  status: String!
+  riskScore: Int!
+  fraudFlag: Boolean!
+  source: String!
+  processingRegion: String!
+  processingLatencyMs: Int!
+  eventId: String!
+  createdAt: AWSDateTime!
+}
+
+type TransactionConnection {
+  items: [Transaction!]!
+  nextToken: String
+}
+
+type Stats {
+  totalCount: Int!
+  totalVolume: Float!
+  fraudRate: Float!
+  avgRiskScore: Float!
+  avgLatencyMs: Float!
+}
+
+type Query {
+  listTransactions(limit: Int, nextToken: String): TransactionConnection!
+  getStats: Stats!
+}
+
+type Mutation {
+  notifyTransaction(input: TransactionInput!): Transaction!
+    @aws_iam
+}
+
+type Subscription {
+  onTransactionAdded: Transaction
+    @aws_subscribe(mutations: ["notifyTransaction"])
+    @aws_cognito_user_pools
+}
+
+input TransactionInput {
+  transactionId: ID!
+  amount: Float!
+  currency: String!
+  merchant: String!
+  category: String!
+  status: String!
+  riskScore: Int!
+  fraudFlag: Boolean!
+  source: String!
+  processingRegion: String!
+  processingLatencyMs: Int!
+  eventId: String!
+  createdAt: AWSDateTime!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}

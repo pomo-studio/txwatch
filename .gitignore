@@ -1,0 +1,19 @@
+# Node
+app/node_modules/
+app/.nuxt/
+app/.output/
+app/lambda-deploy.zip
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/*.zip
+infra/lambda/*.zip
+
+# Config (infra-outputs.json IS committed — it's not sensitive)
+# Only exclude local overrides
+config/infra-outputs.local.json
+
+# OS
+.DS_Store
+*.swp

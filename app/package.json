@@ -1,0 +1,27 @@
+{
+  "name": "txwatch-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "build:lambda": "NITRO_PRESET=aws-lambda npm run build"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/client-eventbridge": "^3.500.0",
+    "@aws-sdk/lib-dynamodb": "^3.500.0",
+    "aws-amplify": "^6.0.0",
+    "nuxt": "^3.10.0",
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@types/node": "^20.0.0",
+    "tailwindcss": "^3.4.19"
+  }
+}

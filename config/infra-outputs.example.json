@@ -1,0 +1,60 @@
+{
+  "app_config": {
+    "sensitive": true,
+    "type": "object",
+    "value": {
+      "project_name": "txwatch",
+      "primary_region": "us-east-1",
+      "dr_region": "us-west-2",
+      "lambda": {
+        "primary": {
+          "function_name": "txwatch-primary",
+          "function_url": "https://<id>.lambda-url.us-east-1.on.aws/",
+          "s3_bucket": "txwatch-lambda-deployments-<account>-us-east-1",
+          "s3_key": "lambda/function.zip"
+        },
+        "dr": {
+          "function_name": "txwatch-dr",
+          "function_url": "https://<id>.lambda-url.us-west-2.on.aws/",
+          "s3_bucket": "txwatch-lambda-deployments-<account>-us-west-2",
+          "s3_key": "lambda/function.zip"
+        }
+      },
+      "static_assets": {
+        "s3_bucket": "txwatch-static-<account>"
+      },
+      "cloudfront": {
+        "distribution_id": "E...",
+        "domain_name": "<id>.cloudfront.net"
+      },
+      "appsync": {
+        "api_url": "https://<id>.appsync-api.us-east-1.amazonaws.com/graphql",
+        "realtime_url": "wss://<id>.appsync-realtime-api.us-east-1.amazonaws.com/graphql",
+        "api_key_id": "da2-..."
+      },
+      "cognito": {
+        "user_pool_id": "us-east-1_...",
+        "user_pool_region": "us-east-1",
+        "client_id": "..."
+      },
+      "event_pipeline": {
+        "event_bus_name": "txwatch-bus",
+        "queue_url": "https://sqs.us-east-1.amazonaws.com/<account>/txwatch-queue",
+        "dlq_url": "https://sqs.us-east-1.amazonaws.com/<account>/txwatch-dlq"
+      },
+      "dynamodb": {
+        "table_name": "txwatch-transactions"
+      }
+    }
+  },
+  "application_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://txwatch.pomo.dev"
+  },
+  "cloudfront_domain_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "<id>.cloudfront.net"
+  }
+}

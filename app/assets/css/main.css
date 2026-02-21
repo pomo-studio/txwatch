@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-canvas text-ink font-sans;
+  }
+
+  h1, h2, h3 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .risk-low {
+    @apply bg-emerald-100 text-emerald-600;
+  }
+  .risk-medium {
+    @apply bg-amber-100 text-amber-500;
+  }
+  .risk-high {
+    @apply bg-rose-100 text-rose-600;
+  }
+}
