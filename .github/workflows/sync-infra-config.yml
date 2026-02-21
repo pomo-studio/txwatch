@@ -2,6 +2,11 @@ name: Sync Infrastructure Config
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**/*.tf'
+      - 'infra/**/*.tfvars'
 
 permissions:
   contents: write
