@@ -1,4 +1,16 @@
 provider "aws" {
+  region = var.primary_region
+
+  default_tags {
+    tags = {
+      Project    = "txwatch"
+      ManagedBy  = "terraform"
+      Repository = "pomo-studio/txwatch"
+    }
+  }
+}
+
+provider "aws" {
   alias  = "primary"
   region = var.primary_region
 

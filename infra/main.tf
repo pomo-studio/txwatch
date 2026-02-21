@@ -42,8 +42,9 @@ module "ssr" {
 
 # Grant SSR Lambda permission to publish to txwatch-bus
 resource "aws_iam_role_policy" "ssr_eventbridge" {
-  name = "txwatch-ssr-eventbridge"
-  role = "txwatch-lambda-role"
+  provider = aws.primary
+  name     = "txwatch-ssr-eventbridge"
+  role     = "txwatch-lambda-role"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -214,6 +215,7 @@ module "api" {
 # AppSync Resolvers
 
 resource "aws_appsync_resolver" "list_transactions" {
+  provider    = aws.primary
   api_id      = module.api.api_id
   type        = "Query"
   field       = "listTransactions"
@@ -227,6 +229,7 @@ resource "aws_appsync_resolver" "list_transactions" {
 }
 
 resource "aws_appsync_resolver" "get_stats" {
+  provider    = aws.primary
   api_id      = module.api.api_id
   type        = "Query"
   field       = "getStats"
@@ -240,6 +243,7 @@ resource "aws_appsync_resolver" "get_stats" {
 }
 
 resource "aws_appsync_resolver" "notify_transaction" {
+  provider    = aws.primary
   api_id      = module.api.api_id
   type        = "Mutation"
   field       = "notifyTransaction"
@@ -253,6 +257,7 @@ resource "aws_appsync_resolver" "notify_transaction" {
 }
 
 resource "aws_appsync_resolver" "on_transaction_added" {
+  provider    = aws.primary
   api_id      = module.api.api_id
   type        = "Subscription"
   field       = "onTransactionAdded"
@@ -317,8 +322,9 @@ module "ingest_pipeline" {
 
 # Grant enricher Lambda permission to call AppSync notifyTransaction mutation
 resource "aws_iam_role_policy" "enricher_appsync" {
-  name = "txwatch-enricher-appsync"
-  role = element(split("/", module.ingest_pipeline.lambda_role_arn), 1)
+  provider = aws.primary
+  name     = "txwatch-enricher-appsync"
+  role     = element(split("/", module.ingest_pipeline.lambda_role_arn), 1)
 
   policy = jsonencode({
     Version = "2012-10-17"
