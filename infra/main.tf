@@ -478,9 +478,4 @@ resource "aws_scheduler_schedule" "generator" {
     arn      = aws_lambda_function.generator.arn
     role_arn = aws_iam_role.scheduler.arn
   }
-
-  tags = {
-    Project   = "txwatch"
-    ManagedBy = "terraform"
-  }
 }
