@@ -1,0 +1,158 @@
+{
+  "app_config": {
+    "sensitive": true,
+    "type": [
+      "object",
+      {
+        "appsync": [
+          "object",
+          {
+            "api_key_id": "string",
+            "api_url": "string",
+            "realtime_url": "string"
+          }
+        ],
+        "cloudfront": [
+          "object",
+          {
+            "distribution_id": "string",
+            "domain_name": "string"
+          }
+        ],
+        "cognito": [
+          "object",
+          {
+            "client_id": "string",
+            "user_pool_id": "string",
+            "user_pool_region": "string"
+          }
+        ],
+        "dr_region": "string",
+        "dynamodb": [
+          "object",
+          {
+            "table_name": "string"
+          }
+        ],
+        "event_pipeline": [
+          "object",
+          {
+            "dlq_url": "string",
+            "event_bus_name": "string",
+            "queue_url": "string"
+          }
+        ],
+        "lambda": [
+          "object",
+          {
+            "dr": [
+              "object",
+              {
+                "function_name": "string",
+                "function_url": "string",
+                "s3_bucket": "string",
+                "s3_key": "string"
+              }
+            ],
+            "primary": [
+              "object",
+              {
+                "function_name": "string",
+                "function_url": "string",
+                "s3_bucket": "string",
+                "s3_key": "string"
+              }
+            ]
+          }
+        ],
+        "primary_region": "string",
+        "project_name": "string",
+        "static_assets": [
+          "object",
+          {
+            "s3_bucket": "string"
+          }
+        ]
+      }
+    ],
+    "value": {
+      "appsync": {
+        "api_key_id": "z6msgaslozem5pzkjp2ei4rile:da2-px7vsulcsnaabkkxnyiu3yrg7e",
+        "api_url": "https://gbzdn3wpgnemlpdi42v7np6ltq.appsync-api.us-east-1.amazonaws.com/graphql",
+        "realtime_url": "wss://gbzdn3wpgnemlpdi42v7np6ltq.appsync-realtime-api.us-east-1.amazonaws.com/graphql"
+      },
+      "cloudfront": {
+        "distribution_id": "E20X2ZT6508YKK",
+        "domain_name": "d2gsat8hcfjlc4.cloudfront.net"
+      },
+      "cognito": {
+        "client_id": "6fo04t0j9hv5m3puain4cav0cn",
+        "user_pool_id": "us-east-1_PfOMuuyuO",
+        "user_pool_region": "us-east-1"
+      },
+      "dr_region": "us-west-2",
+      "dynamodb": {
+        "table_name": "txwatch-transactions"
+      },
+      "event_pipeline": {
+        "dlq_url": "https://sqs.us-east-1.amazonaws.com/137064409667/txwatch-enricher-dlq",
+        "event_bus_name": "txwatch-enricher-bus",
+        "queue_url": "https://sqs.us-east-1.amazonaws.com/137064409667/txwatch-enricher-queue"
+      },
+      "lambda": {
+        "dr": {
+          "function_name": "txwatch-dr",
+          "function_url": "https://n77phhuha32uukk5edtacilqy40nbnqf.lambda-url.us-west-2.on.aws/",
+          "s3_bucket": "txwatch-lambda-deployments-137064409667-us-west-2",
+          "s3_key": "lambda/function.zip"
+        },
+        "primary": {
+          "function_name": "txwatch-primary",
+          "function_url": "https://fbno65tafaryybvkxyauvodv2e0jzgmm.lambda-url.us-east-1.on.aws/",
+          "s3_bucket": "txwatch-lambda-deployments-137064409667-us-east-1",
+          "s3_key": "lambda/function.zip"
+        }
+      },
+      "primary_region": "us-east-1",
+      "project_name": "txwatch",
+      "static_assets": {
+        "s3_bucket": "txwatch-static-137064409667"
+      }
+    }
+  },
+  "application_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://txwatch.pomo.dev"
+  },
+  "appsync_realtime_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "wss://gbzdn3wpgnemlpdi42v7np6ltq.appsync-realtime-api.us-east-1.amazonaws.com/graphql"
+  },
+  "appsync_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://gbzdn3wpgnemlpdi42v7np6ltq.appsync-api.us-east-1.amazonaws.com/graphql"
+  },
+  "cloudfront_domain_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "d2gsat8hcfjlc4.cloudfront.net"
+  },
+  "cognito_client_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "6fo04t0j9hv5m3puain4cav0cn"
+  },
+  "cognito_user_pool_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "us-east-1_PfOMuuyuO"
+  },
+  "event_bus_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "txwatch-enricher-bus"
+  }
+}
