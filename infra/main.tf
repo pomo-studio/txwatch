@@ -27,7 +27,8 @@ module "ssr" {
   }
 
   project_name    = "txwatch"
-  domain_name     = "txwatch.pomo.dev"
+  domain_name     = "pomo.dev"
+  subdomain       = "txwatch"
   route53_managed = true
   enable_dynamo   = true
 
