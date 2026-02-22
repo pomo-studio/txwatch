@@ -1,6 +1,7 @@
 # =============================================================================
 # TxWatch Infrastructure
 # Real-time transaction monitoring demo — all five pomo-studio modules in one app
+# Updated: Manual CloudFront OAC removal completed, ready for v2.4.1 module update
 # =============================================================================
 
 data "aws_caller_identity" "current" {
