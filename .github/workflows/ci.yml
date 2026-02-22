@@ -86,3 +86,7 @@ jobs:
         run: |
           test -x scripts/deploy.sh || (echo "deploy.sh not executable" && exit 1)
           echo "Deploy script OK"
+      - name: Check API boundary contract
+        run: |
+          chmod +x scripts/check-api-boundary.sh
+          ./scripts/check-api-boundary.sh
