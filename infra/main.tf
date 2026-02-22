@@ -19,8 +19,9 @@ data "aws_region" "primary" {
 # enable_dynamo = true creates the txwatch-visits table (page visit counter)
 
 module "ssr" {
-  source  = "pomo-studio/serverless-ssr/aws"
-  version = "~> 2.4.3"
+  # Using git reference until v2.4.3 is available in Terraform Registry
+  source  = "git::https://github.com/pomo-studio/terraform-aws-serverless-ssr.git?ref=main"
+  # version = "~> 2.4.3"  # Temporarily using git reference
 
   providers = {
     aws.primary = aws.primary
