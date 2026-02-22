@@ -15,6 +15,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  issues: write
 
 jobs:
   event-smoke:
@@ -57,3 +58,57 @@ jobs:
         env:
           INFRA_CONFIG: ${{ github.workspace }}/config/infra-outputs.json
         run: ./scripts/event-smoke.sh
+
+      - name: Report smoke regression issue
+        if: failure() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'txwatch smoke regression'
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            const body = [
+              'Event smoke workflow failed on `main`.',
+              '',
+              `- Workflow: ${context.workflow}`,
+              `- Event: ${context.eventName}`,
+              `- SHA: ${context.sha}`,
+              `- Run: ${runUrl}`,
+              '',
+              'Please investigate the failing Event Pipeline Smoke job and restore event ingestion.'
+            ].join('\n')
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            })
+
+            const existing = issues.find((issue) => issue.title.toLowerCase() === title)
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              })
+            } else {
+              const created = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body
+              })
+
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: created.data.number,
+                  labels: ['incident', 'smoke']
+                })
+              } catch (e) {
+                core.warning(`Could not add labels: ${e.message}`)
+              }
+            }
