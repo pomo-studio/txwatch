@@ -2,7 +2,7 @@
  * useTransactions composable
  * Real-time transaction feed via AppSync WebSocket subscription.
  * Uses the AppSync graphql-ws protocol directly — no Amplify dependency.
- * Token is fetched server-side via /api/auth/me and kept in memory only.
+ * Token is fetched server-side via /api/command/auth/me and kept in memory only.
  */
 
 export interface Transaction {
@@ -58,7 +58,7 @@ export function useTransactions(initialItems: Transaction[] = []) {
     // this endpoint is the only path from cookie → memory.
     let idToken: string
     try {
-      const res = await fetch('/api/auth/me')
+      const res = await fetch('/api/command/auth/me')
       if (!res.ok) return
       const data = await res.json()
       idToken = data.idToken

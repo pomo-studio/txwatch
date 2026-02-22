@@ -126,6 +126,33 @@ export function signOutCommand(event: any): { ok: true } {
   return { ok: true }
 }
 
+export function getSessionCommand(event: any): {
+  idToken: string
+  email: string
+  sub: string
+  exp: number
+} {
+  const cookies = parseCookies(event)
+  const token = cookies['txwatch_token']
+
+  if (!token) {
+    throw createError({ statusCode: 401, message: 'Not authenticated', data: { code: 'NOT_AUTHENTICATED' } })
+  }
+
+  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString())
+
+  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+    throw createError({ statusCode: 401, message: 'Session expired', data: { code: 'SESSION_EXPIRED' } })
+  }
+
+  return {
+    idToken: token,
+    email: payload.email ?? '',
+    sub: payload.sub ?? '',
+    exp: payload.exp ?? 0,
+  }
+}
+
 export async function createTransactionCommand(
   input: { category?: string; flagIt?: boolean }
 ): Promise<{ success: true; transactionId: string; category: string; amount: number }> {
