@@ -55,11 +55,11 @@ resource "aws_iam_role_policy" "ssr_eventbridge" {
       Sid      = "PutEventsToTxwatchBus"
       Effect   = "Allow"
       Action   = "events:PutEvents"
-      Resource = module.ingest_pipeline.event_bus_arn
+      Resource = module.ingest_bus.bus_arn_primary
     }]
   })
 
-  depends_on = [module.ssr, module.ingest_pipeline]
+  depends_on = [module.ssr, module.ingest_bus]
 }
 
 # =============================================================================
@@ -274,9 +274,7 @@ resource "aws_appsync_resolver" "on_transaction_added" {
 }
 
 # =============================================================================
-# 5. Event Pipeline (event-pipeline module)
 # =============================================================================
-# EventBridge txwatch-bus → SQS → enricher Lambda
 
 data "archive_file" "enricher" {
   type        = "zip"
@@ -284,13 +282,38 @@ data "archive_file" "enricher" {
   output_path = "${path.module}/lambda/enricher.zip"
 }
 
-module "ingest_pipeline" {
-  source  = "pomo-studio/event-pipeline/aws"
-  version = "~> 1.1"
+module "ingest_bus" {
+  source = "git::https://github.com/pomo-studio/terraform-aws-event-bus.git?ref=v1.0.0"
 
-  name = "txwatch-enricher"
+  providers = {
+    aws.primary = aws.primary
+    aws.dr      = aws.dr
+  }
 
-  create_event_bus = true
+  name = "txwatch-enricher-bus"
+
+  enable_dr                   = false
+  enable_schema_registry      = false
+  enable_archive              = false
+  enable_cross_region_routing = false
+
+  tags = {
+    Project   = "txwatch"
+    ManagedBy = "terraform"
+  }
+}
+
+module "ingest_consumer" {
+  source = "git::https://github.com/pomo-studio/terraform-aws-event-consumer.git?ref=v1.0.0"
+
+  providers = {
+    aws.primary = aws.primary
+    aws.dr      = aws.dr
+  }
+
+  name             = "txwatch-enricher"
+  enable_dr        = false
+  bus_name_primary = module.ingest_bus.bus_name_primary
 
   event_pattern = {
     source = ["txwatch.transactions"]
@@ -307,9 +330,8 @@ module "ingest_pipeline" {
     APPSYNC_URL    = module.api.api_url
   }
 
-  enable_dlq        = true
-  max_receive_count = 3
-
+  enable_dlq                     = true
+  max_receive_count              = 3
   sqs_visibility_timeout_seconds = 180
 
   enable_alarms = true
@@ -327,7 +349,7 @@ module "ingest_pipeline" {
 resource "aws_iam_role_policy" "enricher_dynamodb" {
   provider = aws.primary
   name     = "txwatch-enricher-dynamodb"
-  role     = element(split("/", module.ingest_pipeline.lambda_role_arn), 1)
+  role     = element(split("/", module.ingest_consumer.lambda_role_arn), 1)
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -343,14 +365,14 @@ resource "aws_iam_role_policy" "enricher_dynamodb" {
     }]
   })
 
-  depends_on = [module.ingest_pipeline, aws_dynamodb_table.transactions]
+  depends_on = [module.ingest_consumer, aws_dynamodb_table.transactions]
 }
 
 # Grant enricher Lambda permission to call AppSync notifyTransaction mutation
 resource "aws_iam_role_policy" "enricher_appsync" {
   provider = aws.primary
   name     = "txwatch-enricher-appsync"
-  role     = element(split("/", module.ingest_pipeline.lambda_role_arn), 1)
+  role     = element(split("/", module.ingest_consumer.lambda_role_arn), 1)
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -364,7 +386,7 @@ resource "aws_iam_role_policy" "enricher_appsync" {
     }]
   })
 
-  depends_on = [module.ingest_pipeline, module.api]
+  depends_on = [module.ingest_consumer, module.api]
 }
 
 # =============================================================================
@@ -413,7 +435,7 @@ resource "aws_iam_role_policy" "generator_events" {
       Sid      = "PutEventsToTxwatchBus"
       Effect   = "Allow"
       Action   = "events:PutEvents"
-      Resource = module.ingest_pipeline.event_bus_arn
+      Resource = module.ingest_bus.bus_arn_primary
     }]
   })
 }
@@ -433,7 +455,7 @@ resource "aws_lambda_function" "generator" {
 
   environment {
     variables = {
-      EVENT_BUS_NAME = module.ingest_pipeline.event_bus_name
+      EVENT_BUS_NAME = module.ingest_bus.bus_name_primary
     }
   }
 

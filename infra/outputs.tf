@@ -49,9 +49,14 @@ output "app_config" {
     }
 
     event_pipeline = {
-      event_bus_name = module.ingest_pipeline.event_bus_name
-      queue_url      = module.ingest_pipeline.queue_url
-      dlq_url        = module.ingest_pipeline.dlq_url
+      event_bus_name = module.ingest_bus.bus_name_primary
+      queue_url      = module.ingest_consumer.queue_url_primary
+      dlq_url = module.ingest_consumer.dlq_arn_primary != null ? format(
+        "https://sqs.%s.amazonaws.com/%s/%s",
+        split(":", module.ingest_consumer.dlq_arn_primary)[3],
+        split(":", module.ingest_consumer.dlq_arn_primary)[4],
+        split(":", module.ingest_consumer.dlq_arn_primary)[5]
+      ) : null
     }
 
     dynamodb = {
@@ -92,5 +97,5 @@ output "cognito_client_id" {
 
 output "event_bus_name" {
   description = "EventBridge custom bus name"
-  value       = module.ingest_pipeline.event_bus_name
+  value       = module.ingest_bus.bus_name_primary
 }
