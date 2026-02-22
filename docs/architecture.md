@@ -11,6 +11,8 @@ TxWatch is a real-time transaction monitoring dashboard that serves two purposes
 2. **Module integration showcase**: A living reference that exercises every
    pomo-studio Terraform module in one coherent application.
 
+For API ownership and migration boundary details, see `docs/api-boundary-contract.md`.
+
 ## Infrastructure diagram
 
 ```

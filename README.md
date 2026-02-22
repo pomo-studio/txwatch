@@ -96,3 +96,4 @@ Automated via GitHub Actions on push to `main`:
 - `sync-infra-config.yml` — commits terraform outputs after TFC apply
 
 See [docs/architecture.md](docs/architecture.md) for full architecture details.
+See [docs/api-boundary-contract.md](docs/api-boundary-contract.md) for issue #2 API ownership contract.
