@@ -15,6 +15,7 @@ TxWatch is a real-time transaction monitoring dashboard that serves two purposes
 
 - Command-style routes now exist under `/api/command/*` as the API boundary seam.
 - Legacy routes (`/api/auth/*`, `/api/tx`) are still present as compatibility adapters.
+- Legacy POST routes return deprecation headers pointing to `/api/command/*` replacements.
 - Goal: complete migration to boundary-owned command routes, then retire legacy POST paths.
 
 ## Infrastructure diagram
