@@ -165,7 +165,7 @@ async function handleSignIn() {
   error.value   = ''
   loading.value = true
   try {
-    await post('/api/auth/signin', { email: email.value, password: password.value })
+    await post('/api/command/auth/signin', { email: email.value, password: password.value })
     await navigateTo('/')
   } catch (e: any) {
     error.value = e.message
@@ -178,7 +178,7 @@ async function handleSignUp() {
   error.value   = ''
   loading.value = true
   try {
-    const res = await post('/api/auth/signup', { email: email.value, password: password.value })
+    const res = await post('/api/command/auth/signup', { email: email.value, password: password.value })
     if (res.needsConfirmation) {
       mode.value = 'confirm'
     } else {
@@ -196,7 +196,7 @@ async function handleConfirm() {
   error.value   = ''
   loading.value = true
   try {
-    const res = await post('/api/auth/confirm', {
+    const res = await post('/api/command/auth/confirm', {
       email:    email.value,
       password: password.value,
       code:     code.value,

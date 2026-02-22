@@ -24,7 +24,7 @@ in one coherent application.
 User clicks "New Transaction"      Scheduler (every 30s)
               │                          │
               ▼                          ▼
-     /api/tx (SSR route)      generator Lambda
+ /api/command/tx/create       generator Lambda
      events:PutEvents         events:PutEvents
               │                          │
               └──────────────────────────┘
@@ -63,7 +63,7 @@ txwatch/
 │       └── generator/   Random transaction generator
 ├── app/                 Nuxt 3 application
 │   ├── pages/           index.vue, login.vue, about.vue
-│   ├── server/api/      health, tx (POST), txfeed (GET)
+│   ├── server/api/      health, command/*, legacy auth/tx adapters, txfeed
 │   ├── composables/     useTransactions (AppSync subscription)
 │   └── middleware/      auth.ts (server-side auth guard)
 ├── config/              infra-outputs.json (committed, synced by CI)

@@ -11,6 +11,12 @@ TxWatch is a real-time transaction monitoring dashboard that serves two purposes
 2. **Module integration showcase**: A living reference that exercises every
    pomo-studio Terraform module in one coherent application.
 
+## API boundary migration (in progress)
+
+- Command-style routes now exist under `/api/command/*` as the API boundary seam.
+- Legacy routes (`/api/auth/*`, `/api/tx`) are still present as compatibility adapters.
+- Goal: complete migration to boundary-owned command routes, then retire legacy POST paths.
+
 ## Infrastructure diagram
 
 ```

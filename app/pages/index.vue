@@ -186,7 +186,7 @@ async function fireTx() {
   firing.value = true
   txError.value = ''
   try {
-    await $fetch('/api/tx', {
+    await $fetch('/api/command/tx/create', {
       method: 'POST',
       body: {
         category: selectedCategory.value === 'random' ? undefined : selectedCategory.value,
@@ -207,7 +207,7 @@ function formatTime(iso: string): string {
 }
 
 async function signOut() {
-  await fetch('/api/auth/signout', { method: 'POST' })
+  await fetch('/api/command/auth/signout', { method: 'POST' })
   await navigateTo('/login')
 }
 </script>
