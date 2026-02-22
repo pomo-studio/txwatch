@@ -321,6 +321,7 @@ module "ingest_consumer" {
 
   create_lambda      = true
   lambda_code        = data.archive_file.enricher.output_path
+  lambda_handler     = "bundle.handler"
   lambda_runtime     = "nodejs20.x"
   lambda_timeout     = 30
   lambda_memory_size = 256
@@ -446,7 +447,7 @@ resource "aws_lambda_function" "generator" {
   function_name    = "txwatch-generator"
   description      = "TxWatch — generates random transactions on a schedule"
   role             = aws_iam_role.generator.arn
-  handler          = "index.handler"
+  handler          = "bundle.handler"
   runtime          = "nodejs20.x"
   filename         = data.archive_file.generator.output_path
   source_code_hash = data.archive_file.generator.output_base64sha256

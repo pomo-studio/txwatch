@@ -1,3 +1,10 @@
 {
-  "type": "module"
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/client-dynamodb": "^3.995.0",
+    "@aws-sdk/credential-provider-env": "^3.972.9",
+    "@aws-sdk/lib-dynamodb": "^3.995.0",
+    "@smithy/signature-v4": "^5.3.8",
+    "esbuild": "^0.27.3"
+  }
 }
