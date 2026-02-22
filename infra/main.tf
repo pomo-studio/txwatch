@@ -19,8 +19,7 @@ data "aws_region" "primary" {
 # enable_dynamo = true creates the txwatch-visits table (page visit counter)
 
 module "ssr" {
-  source  = "pomo-studio/serverless-ssr/aws"
-  version = "~> 2.4.7"
+  source = "git::https://github.com/pomo-studio/terraform-aws-serverless-ssr.git?ref=fix/oac-origin-policy"
 
   providers = {
     aws.primary = aws.primary
