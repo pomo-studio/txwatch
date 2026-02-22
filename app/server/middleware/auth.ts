@@ -2,7 +2,7 @@
 // Reads the ID token from an httpOnly cookie and checks expiry.
 // Redirects unauthenticated / expired sessions to /login.
 
-const PUBLIC_PATHS = ['/login', '/about', '/api/health', '/api/auth/']
+const PUBLIC_PATHS = ['/login', '/about', '/api/health', '/api/command/auth/']
 
 export default defineEventHandler((event) => {
   const path = getRequestURL(event).pathname

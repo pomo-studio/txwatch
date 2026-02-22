@@ -24,7 +24,7 @@
           <pre>User clicks "New Transaction"      EventBridge Scheduler (every 30s)
           │                                        │
           ▼                                        ▼
-  SSR route /api/tx               generator Lambda
+  API boundary /api/command/tx/create   generator Lambda
   (events:PutEvents)              (events:PutEvents)
           │                                        │
           └──────────────┬─────────────────────────┘
@@ -122,7 +122,7 @@ const modules = [
     name: 'serverless-ssr',
     registry: 'pomo-studio/serverless-ssr/aws',
     version: '~> 2.2',
-    role: 'SSR frontend — Nuxt 3 on Lambda behind CloudFront with multi-region failover. Serves the dashboard, handles auth cookies, and fires transactions via /api/tx.'
+    role: 'SSR frontend — Nuxt 3 on Lambda behind CloudFront with multi-region failover. Serves the dashboard and handles auth cookies. Transaction commands flow via API boundary routes.'
   },
   {
     name: 'event-pipeline',

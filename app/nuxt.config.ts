@@ -15,8 +15,8 @@ export default defineNuxtConfig({
       '/login':   { headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' } },
       '/about':   { headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600' } },
       // API routes
-      '/api/health': { headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30' } },
-      '/api/tx':     { headers: { 'Cache-Control': 'no-store, no-cache' } }
+      '/api/health':            { headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30' } },
+      '/api/command/tx/create': { headers: { 'Cache-Control': 'no-store, no-cache' } }
     }
   },
 

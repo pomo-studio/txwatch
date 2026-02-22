@@ -13,10 +13,8 @@ TxWatch is a real-time transaction monitoring dashboard that serves two purposes
 
 ## API boundary migration (in progress)
 
-- Command-style routes now exist under `/api/command/*` as the API boundary seam, including session bridge `/api/command/auth/me`.
-- Legacy routes (`/api/auth/*`, `/api/tx`) are still present as compatibility adapters.
-- Legacy POST routes return deprecation headers pointing to `/api/command/*` replacements.
-- Goal: complete migration to boundary-owned command routes, then retire legacy POST paths.
+- Command-style routes under `/api/command/*` are the API boundary seam, including session bridge `/api/command/auth/me`.
+- POST/auth flows are owned by API boundary routes, not legacy SSR-routed aliases.
 
 ## Infrastructure diagram
 
@@ -124,4 +122,4 @@ Rule-based, explainable, no ML dependency:
 - GitHub Actions → AWS via `github-actions-txwatch` role (deploy-only)
 - AppSync API key lives in Lambda environment only — never sent to browser
 - Cognito JWT stored in httpOnly cookie (server-side auth via AWS SDK — no Amplify)
-- AppSync token fetched from `/api/auth/me` on mount, held in memory only — never in localStorage or readable cookies
+- AppSync token fetched from `/api/command/auth/me` on mount, held in memory only — never in localStorage or readable cookies
