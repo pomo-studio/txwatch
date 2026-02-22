@@ -95,5 +95,5 @@ moved {
 
 import {
   to = module.ingest_consumer.aws_cloudwatch_log_group.lambda_primary[0]
-  id = "/aws/lambda/txwatch-enricher"
+  id = "/aws/lambda/txwatch-enricher-processor"
 }
