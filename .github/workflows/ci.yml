@@ -85,4 +85,5 @@ jobs:
       - name: Check deploy script
         run: |
           test -x scripts/deploy.sh || (echo "deploy.sh not executable" && exit 1)
+          test -x scripts/event-smoke.sh || (echo "event-smoke.sh not executable" && exit 1)
           echo "Deploy script OK"

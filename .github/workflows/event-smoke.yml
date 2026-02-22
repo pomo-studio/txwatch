@@ -1,0 +1,59 @@
+name: Event Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - 'scripts/**'
+      - 'config/infra-outputs.json'
+      - '.github/workflows/event-smoke.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 11 * * *'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  event-smoke:
+    name: Event Pipeline Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check prerequisites
+        run: |
+          if [ -z "${{ secrets.AWS_ROLE_ARN }}" ]; then
+            echo "::error::AWS_ROLE_ARN secret not set"
+            exit 1
+          fi
+          if [ ! -f "config/infra-outputs.json" ] && [ -z "${{ vars.INFRA_OUTPUTS_JSON }}" ]; then
+            echo "::error::Infrastructure config not found"
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Write infrastructure config
+        run: |
+          if [ -f "config/infra-outputs.json" ]; then
+            echo "Using committed infra config"
+          else
+            mkdir -p config
+            echo '${{ vars.INFRA_OUTPUTS_JSON }}' > config/infra-outputs.json
+          fi
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Run event smoke test
+        env:
+          INFRA_CONFIG: ${{ github.workspace }}/config/infra-outputs.json
+        run: ./scripts/event-smoke.sh
