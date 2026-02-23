@@ -161,10 +161,24 @@ async function callSignedAppSync(url, region, mutation, tx) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        const parsed = JSON.parse(data);
-        if (parsed.errors) {
-          console.error('AppSync errors:', JSON.stringify(parsed.errors));
+        let parsed;
+        try {
+          parsed = JSON.parse(data);
+        } catch {
+          reject(new Error(`AppSync ${url} returned non-JSON response`));
+          return;
         }
+
+        if ((res.statusCode || 500) >= 400) {
+          reject(new Error(`AppSync ${url} HTTP ${res.statusCode}: ${JSON.stringify(parsed)}`));
+          return;
+        }
+
+        if (parsed.errors && parsed.errors.length > 0) {
+          reject(new Error(`AppSync ${url} GraphQL errors: ${JSON.stringify(parsed.errors)}`));
+          return;
+        }
+
         resolve(parsed);
       });
     });
