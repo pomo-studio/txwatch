@@ -144,8 +144,7 @@ module "auth" {
 #       API_KEY (SSR server-side listTransactions query)
 
 module "api" {
-  source  = "pomo-studio/appsync/aws"
-  version = "~> 1.0"
+  source = "git::https://github.com/pomo-studio/terraform-aws-appsync.git?ref=6f13832637f0b50af4aadf9871d952df0a3c1a59"
 
   name   = "txwatch-api"
   schema = file("${path.module}/schema.graphql")
@@ -340,7 +339,7 @@ resource "aws_iam_role_policy" "enricher_appsync" {
       Effect = "Allow"
       Action = "appsync:GraphQL"
       Resource = [
-        "${replace(replace(module.api.api_url, "https://", "arn:aws:appsync:${var.primary_region}:${data.aws_caller_identity.current.account_id}:apis/"), "/graphql", "")}/types/Mutation/fields/notifyTransaction"
+        "${module.api.graphql_field_arn_prefix}/Mutation/fields/notifyTransaction"
       ]
     }]
   })
