@@ -26,7 +26,7 @@ txwatch infra/main.tf
 │   ├── User pool + app client
 │   └── Hosted UI domain + oauth callback/logout wiring
 │
-├── module.api (terraform-aws-appsync pinned commit)
+├── module.api (pomo-studio/appsync/aws = 1.2.0)
 │   ├── AppSync API: txwatch-api
 │   ├── Auth: Cognito (primary) + AWS_IAM + API_KEY
 │   ├── Data source: txwatch-transactions (DynamoDB)
