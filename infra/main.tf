@@ -416,8 +416,10 @@ module "ingest_consumer" {
   lambda_memory_size = 256
 
   lambda_environment_variables = {
-    DYNAMODB_TABLE = aws_dynamodb_table.transactions.name
-    APPSYNC_URL    = module.api.api_url
+    DYNAMODB_TABLE    = aws_dynamodb_table.transactions.name
+    DR_DYNAMODB_TABLE = aws_dynamodb_table.transactions_dr.name
+    DR_REGION         = var.dr_region
+    APPSYNC_URL       = module.api.api_url
   }
 
   enable_dlq                     = true
@@ -451,11 +453,14 @@ resource "aws_iam_role_policy" "enricher_dynamodb" {
         "dynamodb:UpdateItem",
         "dynamodb:GetItem"
       ]
-      Resource = aws_dynamodb_table.transactions.arn
+      Resource = [
+        aws_dynamodb_table.transactions.arn,
+        aws_dynamodb_table.transactions_dr.arn
+      ]
     }]
   })
 
-  depends_on = [module.ingest_consumer, aws_dynamodb_table.transactions]
+  depends_on = [module.ingest_consumer, aws_dynamodb_table.transactions, aws_dynamodb_table.transactions_dr]
 }
 
 # Grant enricher Lambda permission to call AppSync notifyTransaction mutation

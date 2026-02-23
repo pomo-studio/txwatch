@@ -15,9 +15,14 @@ import crypto from 'node:crypto';
 
 const REGION = process.env.AWS_REGION || 'us-east-1';
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE;
+const DR_REGION = process.env.DR_REGION || 'us-west-2';
+const DR_DYNAMODB_TABLE = process.env.DR_DYNAMODB_TABLE;
 const APPSYNC_URL = process.env.APPSYNC_URL;
 
-const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
+const dynamoPrimary = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
+const dynamoDr = DR_DYNAMODB_TABLE
+  ? DynamoDBDocumentClient.from(new DynamoDBClient({ region: DR_REGION }))
+  : null;
 
 // Merchant data by category
 const MERCHANTS = {
@@ -54,9 +59,9 @@ function calculateRiskScore(detail) {
   return Math.min(score, 100);
 }
 
-async function writeToDynamo(tx) {
-  await dynamo.send(new PutCommand({
-    TableName: DYNAMODB_TABLE,
+async function writeToDynamo(tableName, client, tx) {
+  await client.send(new PutCommand({
+    TableName: tableName,
     Item: {
       PK: `TX#${tx.transactionId}`,
       SK: tx.createdAt,
@@ -201,8 +206,8 @@ export async function handler(event) {
     };
 
     try {
-      await writeToDynamo(tx);
-      console.log(`[enricher] wrote ${txId} to DynamoDB`);
+      await replicateTransaction(tx);
+      console.log(`[enricher] wrote ${txId} to DynamoDB primary${DR_DYNAMODB_TABLE ? ' + dr' : ''}`);
 
       await callAppSync(tx);
       console.log(`[enricher] notified AppSync for ${txId}`);
@@ -216,4 +221,11 @@ export async function handler(event) {
   }
 
   return { processed: results.length, results };
+}
+async function replicateTransaction(tx) {
+  await writeToDynamo(DYNAMODB_TABLE, dynamoPrimary, tx);
+
+  if (DR_DYNAMODB_TABLE && dynamoDr) {
+    await writeToDynamo(DR_DYNAMODB_TABLE, dynamoDr, tx);
+  }
 }
