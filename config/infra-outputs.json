@@ -23,6 +23,11 @@
           "object",
           {
             "client_id": "string",
+            "hosted_ui_callback_url": "string",
+            "hosted_ui_domain": "string",
+            "hosted_ui_logout_url": "string",
+            "hosted_ui_signin_url": "string",
+            "hosted_ui_signout_url": "string",
             "user_pool_id": "string",
             "user_pool_region": "string"
           }
@@ -87,6 +92,11 @@
       },
       "cognito": {
         "client_id": "7piugb0vuaalorgtbvq559s8bh",
+        "hosted_ui_callback_url": "https://txwatch.pomo.dev/api/auth/callback",
+        "hosted_ui_domain": "txwatch-137064409667",
+        "hosted_ui_logout_url": "https://txwatch.pomo.dev/login",
+        "hosted_ui_signin_url": "https://txwatch-137064409667.auth.us-east-1.amazoncognito.com/login?client_id=7piugb0vuaalorgtbvq559s8bh\u0026response_type=code\u0026scope=openid+email+profile\u0026redirect_uri=https%3A%2F%2Ftxwatch.pomo.dev%2Fapi%2Fauth%2Fcallback",
+        "hosted_ui_signout_url": "https://txwatch-137064409667.auth.us-east-1.amazoncognito.com/logout?client_id=7piugb0vuaalorgtbvq559s8bh\u0026logout_uri=https%3A%2F%2Ftxwatch.pomo.dev%2Flogin",
         "user_pool_id": "us-east-1_liQ7A5JXg",
         "user_pool_region": "us-east-1"
       },
@@ -144,6 +154,16 @@
     "sensitive": false,
     "type": "string",
     "value": "7piugb0vuaalorgtbvq559s8bh"
+  },
+  "cognito_hosted_ui_domain": {
+    "sensitive": false,
+    "type": "string",
+    "value": "txwatch-137064409667"
+  },
+  "cognito_hosted_ui_signin_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://txwatch-137064409667.auth.us-east-1.amazoncognito.com/login?client_id=7piugb0vuaalorgtbvq559s8bh\u0026response_type=code\u0026scope=openid+email+profile\u0026redirect_uri=https%3A%2F%2Ftxwatch.pomo.dev%2Fapi%2Fauth%2Fcallback"
   },
   "cognito_user_pool_id": {
     "sensitive": false,
