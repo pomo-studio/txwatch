@@ -1,4 +1,4 @@
-type Transaction {
+type Transaction @aws_api_key @aws_iam @aws_cognito_user_pools {
   transactionId: ID!
   amount: Float!
   currency: String!
