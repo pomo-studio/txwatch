@@ -111,6 +111,10 @@ resource "aws_dynamodb_table" "transactions" {
     projection_type = "ALL"
   }
 
+  replica {
+    region_name = var.dr_region
+  }
+
   tags = {
     Project   = "txwatch"
     ManagedBy = "terraform"
@@ -235,8 +239,13 @@ module "api" {
 
   dr_dynamodb_data_sources = {
     transactions = {
-      table_name = aws_dynamodb_table.transactions_dr.name
-      table_arn  = aws_dynamodb_table.transactions_dr.arn
+      table_name = aws_dynamodb_table.transactions.name
+      table_arn = format(
+        "arn:aws:dynamodb:%s:%s:table/%s",
+        var.dr_region,
+        data.aws_caller_identity.current.account_id,
+        aws_dynamodb_table.transactions.name
+      )
     }
   }
 
@@ -416,10 +425,8 @@ module "ingest_consumer" {
   lambda_memory_size = 256
 
   lambda_environment_variables = {
-    DYNAMODB_TABLE    = aws_dynamodb_table.transactions.name
-    DR_DYNAMODB_TABLE = aws_dynamodb_table.transactions_dr.name
-    DR_REGION         = var.dr_region
-    APPSYNC_URL       = module.api.api_url
+    DYNAMODB_TABLE = aws_dynamodb_table.transactions.name
+    APPSYNC_URL    = module.api.api_url
   }
 
   enable_dlq                     = true
@@ -453,14 +460,11 @@ resource "aws_iam_role_policy" "enricher_dynamodb" {
         "dynamodb:UpdateItem",
         "dynamodb:GetItem"
       ]
-      Resource = [
-        aws_dynamodb_table.transactions.arn,
-        aws_dynamodb_table.transactions_dr.arn
-      ]
+      Resource = aws_dynamodb_table.transactions.arn
     }]
   })
 
-  depends_on = [module.ingest_consumer, aws_dynamodb_table.transactions, aws_dynamodb_table.transactions_dr]
+  depends_on = [module.ingest_consumer, aws_dynamodb_table.transactions]
 }
 
 # Grant enricher Lambda permission to call AppSync notifyTransaction mutation

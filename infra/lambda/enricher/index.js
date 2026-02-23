@@ -15,12 +15,9 @@ import crypto from 'node:crypto';
 
 const REGION = process.env.AWS_REGION || 'us-east-1';
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE;
-const DR_REGION = process.env.DR_REGION || 'us-west-2';
-const DR_DYNAMODB_TABLE = process.env.DR_DYNAMODB_TABLE || 'txwatch-transactions-dr';
 const APPSYNC_URL = process.env.APPSYNC_URL;
 
 const dynamoPrimary = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
-const dynamoDr = DynamoDBDocumentClient.from(new DynamoDBClient({ region: DR_REGION }));
 
 // Merchant data by category
 const MERCHANTS = {
@@ -204,8 +201,8 @@ export async function handler(event) {
     };
 
     try {
-      await replicateTransaction(tx);
-      console.log(`[enricher] wrote ${txId} to DynamoDB primary + dr`);
+      await writeToDynamo(DYNAMODB_TABLE, dynamoPrimary, tx);
+      console.log(`[enricher] wrote ${txId} to DynamoDB primary`);
 
       await callAppSync(tx);
       console.log(`[enricher] notified AppSync for ${txId}`);
@@ -219,9 +216,4 @@ export async function handler(event) {
   }
 
   return { processed: results.length, results };
-}
-async function replicateTransaction(tx) {
-  await writeToDynamo(DYNAMODB_TABLE, dynamoPrimary, tx);
-
-  await writeToDynamo(DR_DYNAMODB_TABLE, dynamoDr, tx);
 }
