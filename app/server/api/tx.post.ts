@@ -1,6 +1,6 @@
 /**
  * POST /api/tx
- * Fires a manual transaction to txwatch-bus via EventBridge PutEvents.
+ * Fires a manual transaction to txwatch-enricher-bus via EventBridge PutEvents.
  * The event is then routed → SQS → enricher Lambda → DynamoDB → AppSync subscription.
  */
 
