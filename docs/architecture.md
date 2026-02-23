@@ -22,7 +22,7 @@ txwatch infra/main.tf
 │   ├── S3 static assets
 │   └── DynamoDB txwatch-visits (page visit counter)
 │
-├── module.auth (cognito-auth local module)
+├── module.auth (terraform-aws-cognito-auth pinned commit)
 │   ├── User pool + app client
 │   └── Hosted UI domain + oauth callback/logout wiring
 │
