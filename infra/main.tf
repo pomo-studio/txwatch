@@ -121,7 +121,7 @@ resource "aws_dynamodb_table" "transactions" {
 # =============================================================================
 
 module "auth" {
-  source = "git::https://github.com/pomo-studio/terraform-aws-cognito-auth.git?ref=1826bf9211f359ea7ed9c70a8efbfa09bd9f9a7c"
+  source = "./modules/cognito-auth"
 
   providers = {
     aws = aws.primary
@@ -129,6 +129,17 @@ module "auth" {
 
   name        = "txwatch-users"
   client_name = "txwatch-app"
+
+  enable_hosted_ui = true
+  domain_prefix    = var.cognito_domain_prefix
+  oauth_callback_urls = [
+    "${var.app_base_url}/api/auth/callback",
+    "http://localhost:3000/api/auth/callback"
+  ]
+  oauth_logout_urls = [
+    "${var.app_base_url}/login",
+    "http://localhost:3000/login"
+  ]
 
   tags = {
     Project   = "txwatch"

@@ -25,7 +25,7 @@ export async function putEvents(entries: EventEntry[]): Promise<void> {
     region,
     headers: {
       'content-type': 'application/x-amz-json-1.1',
-      'x-amz-target': 'AmazonEventBridge.PutEvents',
+      'x-amz-target': 'AWSEvents.PutEvents',
     },
   })
 

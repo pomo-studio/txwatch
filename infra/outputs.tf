@@ -43,9 +43,14 @@ output "app_config" {
     }
 
     cognito = {
-      user_pool_id     = module.auth.user_pool_id
-      user_pool_region = module.auth.region
-      client_id        = module.auth.client_id
+      user_pool_id           = module.auth.user_pool_id
+      user_pool_region       = module.auth.region
+      client_id              = module.auth.client_id
+      hosted_ui_domain       = module.auth.hosted_ui_domain
+      hosted_ui_signin_url   = module.auth.hosted_ui_signin_url
+      hosted_ui_signout_url  = module.auth.hosted_ui_signout_url
+      hosted_ui_callback_url = "${var.app_base_url}/api/auth/callback"
+      hosted_ui_logout_url   = "${var.app_base_url}/login"
     }
 
     event_pipeline = {
@@ -93,6 +98,16 @@ output "cognito_user_pool_id" {
 output "cognito_client_id" {
   description = "Cognito User Pool Client ID"
   value       = module.auth.client_id
+}
+
+output "cognito_hosted_ui_domain" {
+  description = "Cognito Hosted UI domain prefix"
+  value       = module.auth.hosted_ui_domain
+}
+
+output "cognito_hosted_ui_signin_url" {
+  description = "Cognito Hosted UI sign-in URL"
+  value       = module.auth.hosted_ui_signin_url
 }
 
 output "event_bus_name" {
