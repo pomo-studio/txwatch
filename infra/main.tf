@@ -111,10 +111,6 @@ resource "aws_dynamodb_table" "transactions" {
     projection_type = "ALL"
   }
 
-  replica {
-    region_name = var.dr_region
-  }
-
   tags = {
     Project   = "txwatch"
     ManagedBy = "terraform"
@@ -239,13 +235,8 @@ module "api" {
 
   dr_dynamodb_data_sources = {
     transactions = {
-      table_name = aws_dynamodb_table.transactions.name
-      table_arn = format(
-        "arn:aws:dynamodb:%s:%s:table/%s",
-        var.dr_region,
-        data.aws_caller_identity.current.account_id,
-        aws_dynamodb_table.transactions.name
-      )
+      table_name = aws_dynamodb_table.transactions_dr.name
+      table_arn  = aws_dynamodb_table.transactions_dr.arn
     }
   }
 
@@ -355,6 +346,20 @@ resource "aws_appsync_resolver" "notify_transaction_dr" {
   code = file("${path.module}/resolvers/notifyTransaction.js")
 }
 
+resource "aws_appsync_resolver" "replicate_transaction_dr" {
+  provider    = aws.dr
+  api_id      = module.api.dr_api_id
+  type        = "Mutation"
+  field       = "replicateTransaction"
+  data_source = module.api.dr_data_source_names["transactions"]
+
+  runtime {
+    name            = "APPSYNC_JS"
+    runtime_version = "1.0.0"
+  }
+  code = file("${path.module}/resolvers/replicateTransaction.js")
+}
+
 resource "aws_appsync_resolver" "on_transaction_added_dr" {
   provider    = aws.dr
   api_id      = module.api.dr_api_id
@@ -427,6 +432,8 @@ module "ingest_consumer" {
   lambda_environment_variables = {
     DYNAMODB_TABLE = aws_dynamodb_table.transactions.name
     APPSYNC_URL    = module.api.api_url
+    DR_APPSYNC_URL = module.api.dr_api_url
+    DR_REGION      = var.dr_region
   }
 
   enable_dlq                     = true
@@ -481,7 +488,19 @@ resource "aws_iam_role_policy" "enricher_appsync" {
       Action = "appsync:GraphQL"
       Resource = [
         "${module.api.graphql_field_arn_prefix}/Mutation/fields/notifyTransaction",
-        "${module.api.graphql_field_arn_prefix}/Transaction/fields/*"
+        "${module.api.graphql_field_arn_prefix}/Transaction/fields/*",
+        format(
+          "arn:aws:appsync:%s:%s:apis/%s/types/Mutation/fields/replicateTransaction",
+          var.dr_region,
+          data.aws_caller_identity.current.account_id,
+          module.api.dr_api_id
+        ),
+        format(
+          "arn:aws:appsync:%s:%s:apis/%s/types/Transaction/fields/*",
+          var.dr_region,
+          data.aws_caller_identity.current.account_id,
+          module.api.dr_api_id
+        )
       ]
     }]
   })

@@ -41,6 +41,8 @@ type Query {
 type Mutation {
   notifyTransaction(input: TransactionInput!): Transaction!
     @aws_iam
+  replicateTransaction(input: TransactionInput!): Transaction!
+    @aws_iam
 }
 
 type Subscription {

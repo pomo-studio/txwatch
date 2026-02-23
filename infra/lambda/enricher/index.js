@@ -16,6 +16,8 @@ import crypto from 'node:crypto';
 const REGION = process.env.AWS_REGION || 'us-east-1';
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE;
 const APPSYNC_URL = process.env.APPSYNC_URL;
+const DR_APPSYNC_URL = process.env.DR_APPSYNC_URL;
+const DR_REGION = process.env.DR_REGION || 'us-west-2';
 
 const dynamoPrimary = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
@@ -67,8 +69,6 @@ async function writeToDynamo(tableName, client, tx) {
 }
 
 async function callAppSync(tx) {
-  const endpoint = new URL(APPSYNC_URL);
-
   const mutation = /* GraphQL */ `
     mutation NotifyTransaction($input: TransactionInput!) {
       notifyTransaction(input: $input) {
@@ -88,6 +88,26 @@ async function callAppSync(tx) {
       }
     }
   `;
+
+  return callSignedAppSync(APPSYNC_URL, REGION, mutation, tx);
+}
+
+async function callDrReplication(tx) {
+  if (!DR_APPSYNC_URL) return;
+
+  const mutation = /* GraphQL */ `
+    mutation ReplicateTransaction($input: TransactionInput!) {
+      replicateTransaction(input: $input) {
+        transactionId
+      }
+    }
+  `;
+
+  return callSignedAppSync(DR_APPSYNC_URL, DR_REGION, mutation, tx);
+}
+
+async function callSignedAppSync(url, region, mutation, tx) {
+  const endpoint = new URL(url);
 
   const body = JSON.stringify({
     query: mutation,
@@ -112,7 +132,7 @@ async function callAppSync(tx) {
 
   const signer = new SignatureV4({
     credentials: fromEnv(),
-    region: REGION,
+    region,
     service: 'appsync',
     sha256: Sha256
   });
@@ -206,6 +226,9 @@ export async function handler(event) {
 
       await callAppSync(tx);
       console.log(`[enricher] notified AppSync for ${txId}`);
+
+      await callDrReplication(tx);
+      console.log(`[enricher] replicated ${txId} into DR AppSync`);
 
       results.push({ txId, success: true });
     } catch (err) {
