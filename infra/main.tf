@@ -121,7 +121,7 @@ resource "aws_dynamodb_table" "transactions" {
 # =============================================================================
 
 module "auth" {
-  source = "./modules/cognito-auth"
+  source = "git::https://github.com/pomo-studio/terraform-aws-cognito-auth.git?ref=41d71d8acbde0fbf32b9b869058a0c0ca3d8dea0"
 
   providers = {
     aws = aws.primary
