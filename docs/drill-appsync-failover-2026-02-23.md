@@ -62,18 +62,37 @@ Interpretation:
 - DR endpoint availability is verified.
 - DR data parity is not guaranteed in current txwatch topology (expected at this stage; no cross-region transaction replication in place).
 
-## Next corrective action
+## Follow-up execution (same session)
 
-Choose one and keep contract explicit:
+### Attempt A: direct Lambda dual-write to DR DynamoDB
 
-1. Authorize read queries for API key in schema/resolver auth policy (most aligned with current server route design).
-2. Move `/api/txfeed` server query path from API key to IAM-signed request.
+- Implemented dual-write logic in enricher Lambda and deployed (`run-bSVbrewpvCRkBcpX`, `run-Vwv14fTMuiSvt6ay`, both `applied`).
+- Outcome: DR query counts remained `0` across repeated drill windows.
 
-Next iteration for stronger HA behavior:
+### Attempt B: global-table read parity
 
-- Add primary -> DR transaction replication (or event replay) and re-run this drill with minimum DR record-count threshold.
+- Tried moving DR read path to a DynamoDB global-table replica.
+- Initial apply failed due Terraform role permission gap while managing replica PITR:
+  - `dynamodb:UpdateContinuousBackups` denied in `us-west-2`.
+  - Evidence: errored run `run-T8HJ4Qqw9sX5DR7S`.
+- Subsequent config realignment completed with stream setting fix and new run applied (`run-Cw95eLbwvFDTcpy9`).
 
-Reference business query gate used post-fix:
+### Attempt C: DR AppSync mutation replication
+
+- Added `replicateTransaction` mutation (`@aws_iam`) and DR resolver (`infra/resolvers/replicateTransaction.js`) writing to `txwatch-transactions-dr`.
+- Updated enricher to call DR AppSync mutation after primary notify.
+- Deployment included in applied run `run-Cw95eLbwvFDTcpy9`.
+- Outcome: DR endpoint stays healthy, but business-query drill still reports `count=0` on DR.
+
+## Current status
+
+- **Confirmed good**: endpoint cutover + rollback health checks.
+- **Confirmed good**: API-key authorization for server-side read queries.
+- **Still open**: DR data parity is not yet observable via `listTransactions`.
+
+Most likely next diagnostic step is CloudWatch log inspection for `txwatch-enricher` to confirm DR replication call result path (IAM denial vs mutation/runtime error).
+
+Reference business query gate:
 
 ```graphql
 query Drill($limit:Int){ listTransactions(limit:$limit){ items{ transactionId } nextToken } }
