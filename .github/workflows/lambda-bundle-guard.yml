@@ -1,0 +1,62 @@
+name: Lambda Bundle Guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/lambda/enricher/index.js'
+      - 'infra/lambda/enricher/bundle.js'
+      - '.github/workflows/lambda-bundle-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/lambda/enricher/index.js'
+      - 'infra/lambda/enricher/bundle.js'
+      - '.github/workflows/lambda-bundle-guard.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Enricher bundle sync check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate bundle is refreshed with source changes
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          INDEX_CHANGED=false
+          BUNDLE_CHANGED=false
+
+          if echo "$CHANGED" | grep -q '^infra/lambda/enricher/index.js$'; then
+            INDEX_CHANGED=true
+          fi
+          if echo "$CHANGED" | grep -q '^infra/lambda/enricher/bundle.js$'; then
+            BUNDLE_CHANGED=true
+          fi
+
+          echo "index_changed=$INDEX_CHANGED"
+          echo "bundle_changed=$BUNDLE_CHANGED"
+
+          if [ "$INDEX_CHANGED" = true ] && [ "$BUNDLE_CHANGED" = false ]; then
+            echo "::error::infra/lambda/enricher/index.js changed without bundle.js refresh"
+            echo "::error::Run: npx esbuild infra/lambda/enricher/index.js --bundle --platform=node --target=node20 --format=cjs --outfile=infra/lambda/enricher/bundle.js"
+            exit 1
+          fi
+
+          echo "Bundle guard passed."

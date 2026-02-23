@@ -1,0 +1,75 @@
+name: DR Smoke Weekly
+
+on:
+  schedule:
+    - cron: '23 12 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  dr-smoke:
+    name: AppSync DR Smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify infra outputs artifact exists
+        run: |
+          if [ ! -f "config/infra-outputs.json" ]; then
+            echo "::error::config/infra-outputs.json not found"
+            exit 1
+          fi
+
+      - name: Extract AppSync endpoints and keys
+        run: |
+          set -euo pipefail
+          PRIMARY_APPSYNC_URL=$(jq -r '.app_config.value.appsync.api_url' config/infra-outputs.json)
+          DR_APPSYNC_URL=$(jq -r '.app_config.value.appsync.dr_api_url' config/infra-outputs.json)
+
+          PRIMARY_APPSYNC_API_KEY=$(jq -r '.app_config.value.appsync.api_key_id' config/infra-outputs.json | cut -d: -f2)
+          DR_APPSYNC_API_KEY=$(jq -r '.app_config.value.appsync.dr_api_key_id' config/infra-outputs.json | cut -d: -f2)
+
+          if [ -z "$PRIMARY_APPSYNC_URL" ] || [ "$PRIMARY_APPSYNC_URL" = "null" ]; then
+            echo "::error::Primary AppSync URL missing from infra outputs"
+            exit 1
+          fi
+          if [ -z "$DR_APPSYNC_URL" ] || [ "$DR_APPSYNC_URL" = "null" ]; then
+            echo "::error::DR AppSync URL missing from infra outputs"
+            exit 1
+          fi
+          if [ -z "$PRIMARY_APPSYNC_API_KEY" ] || [ "$PRIMARY_APPSYNC_API_KEY" = "null" ]; then
+            echo "::error::Primary AppSync API key missing from infra outputs"
+            exit 1
+          fi
+          if [ -z "$DR_APPSYNC_API_KEY" ] || [ "$DR_APPSYNC_API_KEY" = "null" ]; then
+            echo "::error::DR AppSync API key missing from infra outputs"
+            exit 1
+          fi
+
+          {
+            echo "PRIMARY_APPSYNC_URL=$PRIMARY_APPSYNC_URL"
+            echo "DR_APPSYNC_URL=$DR_APPSYNC_URL"
+            echo "PRIMARY_APPSYNC_API_KEY=$PRIMARY_APPSYNC_API_KEY"
+            echo "DR_APPSYNC_API_KEY=$DR_APPSYNC_API_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Run DR smoke script
+        run: |
+          set -euo pipefail
+          chmod +x scripts/smoke-appsync-failover.sh
+          scripts/smoke-appsync-failover.sh | tee /tmp/txwatch-dr-smoke-summary.txt
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dr-smoke-${{ github.run_id }}
+          path: |
+            /tmp/txwatch-smoke-primary.json
+            /tmp/txwatch-smoke-dr.json
+            /tmp/txwatch-dr-smoke-summary.txt
+          if-no-files-found: warn
