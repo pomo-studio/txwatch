@@ -86,8 +86,8 @@
         "domain_name": "d2gsat8hcfjlc4.cloudfront.net"
       },
       "cognito": {
-        "client_id": "6fo04t0j9hv5m3puain4cav0cn",
-        "user_pool_id": "us-east-1_PfOMuuyuO",
+        "client_id": "7piugb0vuaalorgtbvq559s8bh",
+        "user_pool_id": "us-east-1_liQ7A5JXg",
         "user_pool_region": "us-east-1"
       },
       "dr_region": "us-west-2",
@@ -143,12 +143,12 @@
   "cognito_client_id": {
     "sensitive": false,
     "type": "string",
-    "value": "6fo04t0j9hv5m3puain4cav0cn"
+    "value": "7piugb0vuaalorgtbvq559s8bh"
   },
   "cognito_user_pool_id": {
     "sensitive": false,
     "type": "string",
-    "value": "us-east-1_PfOMuuyuO"
+    "value": "us-east-1_liQ7A5JXg"
   },
   "event_bus_name": {
     "sensitive": false,
