@@ -121,7 +121,8 @@ resource "aws_dynamodb_table" "transactions" {
 # =============================================================================
 
 module "auth" {
-  source = "git::https://github.com/pomo-studio/terraform-aws-cognito-auth.git?ref=41d71d8acbde0fbf32b9b869058a0c0ca3d8dea0"
+  source  = "pomo-studio/cognito-auth/aws"
+  version = "= 1.1.0"
 
   providers = {
     aws = aws.primary
@@ -251,7 +252,8 @@ data "archive_file" "enricher" {
 }
 
 module "ingest_bus" {
-  source = "git::https://github.com/pomo-studio/terraform-aws-event-bus.git?ref=v1.0.0"
+  source  = "pomo-studio/event-bus/aws"
+  version = "= 1.0.0"
 
   providers = {
     aws.primary = aws.primary
@@ -272,7 +274,8 @@ module "ingest_bus" {
 }
 
 module "ingest_consumer" {
-  source = "git::https://github.com/pomo-studio/terraform-aws-event-consumer.git?ref=v1.0.0"
+  source  = "pomo-studio/event-consumer/aws"
+  version = "= 1.0.0"
 
   providers = {
     aws.primary = aws.primary

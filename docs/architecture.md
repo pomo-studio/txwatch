@@ -22,7 +22,7 @@ txwatch infra/main.tf
 │   ├── S3 static assets
 │   └── DynamoDB txwatch-visits (page visit counter)
 │
-├── module.auth (terraform-aws-cognito-auth pinned commit)
+├── module.auth (pomo-studio/cognito-auth/aws = 1.1.0)
 │   ├── User pool + app client
 │   └── Hosted UI domain + oauth callback/logout wiring
 │
@@ -37,7 +37,7 @@ txwatch infra/main.tf
 │   ├── GSI: AllTransactionsIndex (entity_type, createdAt)
 │   └── GSI: CategoryTimestampIndex (category, createdAt)
 │
-├── module.ingest_bus + module.ingest_consumer (event-bus/event-consumer v1.0.0)
+├── module.ingest_bus + module.ingest_consumer (pomo-studio registry modules = 1.0.0)
 │   ├── Custom bus: txwatch-enricher-bus
 │   ├── Rule: source = ["txwatch.transactions"]
 │   ├── SQS main queue + DLQ
