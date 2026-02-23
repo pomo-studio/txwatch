@@ -36,6 +36,9 @@ APPSYNC_REALTIME=$(jq -r '.app_config.value.appsync.realtime_url'   "$CONFIG_FIL
 COGNITO_POOL_ID=$(jq -r '.app_config.value.cognito.user_pool_id'    "$CONFIG_FILE")
 COGNITO_CLIENT_ID=$(jq -r '.app_config.value.cognito.client_id'     "$CONFIG_FILE")
 COGNITO_REGION=$(jq -r '.app_config.value.cognito.user_pool_region' "$CONFIG_FILE")
+COGNITO_DOMAIN_PREFIX=$(jq -r '.app_config.value.cognito.hosted_ui_domain // empty' "$CONFIG_FILE")
+COGNITO_REDIRECT_URI=$(jq -r '.app_config.value.cognito.hosted_ui_callback_url // empty' "$CONFIG_FILE")
+COGNITO_LOGOUT_URI=$(jq -r '.app_config.value.cognito.hosted_ui_logout_url // empty' "$CONFIG_FILE")
 EVENT_BUS_NAME=$(jq -r '.app_config.value.event_pipeline.event_bus_name' "$CONFIG_FILE")
 DYNAMODB_TABLE=$(jq -r '.app_config.value.dynamodb.table_name'      "$CONFIG_FILE")
 
@@ -59,6 +62,15 @@ export APPSYNC_REALTIME_URL="$APPSYNC_REALTIME"
 export COGNITO_USER_POOL_ID="$COGNITO_POOL_ID"
 export COGNITO_CLIENT_ID
 export COGNITO_REGION
+if [ -n "$COGNITO_DOMAIN_PREFIX" ] && [ "$COGNITO_DOMAIN_PREFIX" != "null" ]; then
+  export COGNITO_DOMAIN_PREFIX
+fi
+if [ -n "$COGNITO_REDIRECT_URI" ] && [ "$COGNITO_REDIRECT_URI" != "null" ]; then
+  export COGNITO_REDIRECT_URI
+fi
+if [ -n "$COGNITO_LOGOUT_URI" ] && [ "$COGNITO_LOGOUT_URI" != "null" ]; then
+  export COGNITO_LOGOUT_URI
+fi
 export EVENT_BUS_NAME
 export DYNAMODB_TABLE
 export APPSYNC_API_KEY
