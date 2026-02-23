@@ -14,12 +14,12 @@ type Transaction @aws_api_key @aws_iam @aws_cognito_user_pools {
   createdAt: AWSDateTime!
 }
 
-type TransactionConnection {
+type TransactionConnection @aws_api_key @aws_iam @aws_cognito_user_pools {
   items: [Transaction!]!
   nextToken: String
 }
 
-type Stats {
+type Stats @aws_api_key @aws_iam @aws_cognito_user_pools {
   totalCount: Int!
   totalVolume: Float!
   fraudRate: Float!
@@ -29,7 +29,13 @@ type Stats {
 
 type Query {
   listTransactions(limit: Int, nextToken: String): TransactionConnection!
+    @aws_api_key
+    @aws_iam
+    @aws_cognito_user_pools
   getStats: Stats!
+    @aws_api_key
+    @aws_iam
+    @aws_cognito_user_pools
 }
 
 type Mutation {
