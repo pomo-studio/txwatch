@@ -156,7 +156,8 @@ module "auth" {
 #       API_KEY (SSR server-side listTransactions query)
 
 module "api" {
-  source = "git::https://github.com/pomo-studio/terraform-aws-appsync.git?ref=13708e875ae977cb05fc617014b0e8816beb0f8c"
+  source  = "pomo-studio/appsync/aws"
+  version = "= 1.2.0"
 
   providers = {
     aws    = aws.primary

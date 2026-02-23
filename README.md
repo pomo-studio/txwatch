@@ -48,7 +48,7 @@ User clicks "New Transaction"      Scheduler (every 1m)
 | `pomo-studio/cognito-auth/aws` | `= 1.1.0` | Cognito user pool + Hosted UI auth flow |
 | `pomo-studio/event-bus/aws` | `= 1.0.0` | EventBridge custom bus |
 | `pomo-studio/event-consumer/aws` | `= 1.0.0` | SQS + enricher Lambda consumer |
-| `terraform-aws-appsync` | `git (pinned commit)` | GraphQL API + real-time subscriptions |
+| `pomo-studio/appsync/aws` | `= 1.2.0` | GraphQL API + real-time subscriptions |
 | `pomo-studio/workspace/tfe` | `~> 1.0` | TFC workspace (managed in pomo core) |
 | `pomo-studio/oidc/aws` | `~> 2.0` | OIDC auth for TFC + GitHub Actions |
 
