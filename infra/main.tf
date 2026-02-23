@@ -156,7 +156,12 @@ module "auth" {
 #       API_KEY (SSR server-side listTransactions query)
 
 module "api" {
-  source = "git::https://github.com/pomo-studio/terraform-aws-appsync.git?ref=6f13832637f0b50af4aadf9871d952df0a3c1a59"
+  source = "git::https://github.com/pomo-studio/terraform-aws-appsync.git?ref=feat/appsync-v1.1-dr-skeleton"
+
+  providers = {
+    aws    = aws.primary
+    aws.dr = aws.dr
+  }
 
   name   = "txwatch-api"
   schema = file("${path.module}/schema.graphql")
