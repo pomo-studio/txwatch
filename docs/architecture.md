@@ -27,12 +27,12 @@ txwatch infra/main.tf
 │   └── Hosted UI domain + oauth callback/logout wiring
 │
 ├── module.api (pomo-studio/appsync/aws = 1.2.0)
-│   ├── AppSync API: txwatch-api
+│   ├── AppSync APIs: txwatch-api (primary) + txwatch-api-dr
 │   ├── Auth: Cognito (primary) + AWS_IAM + API_KEY
-│   ├── Data source: txwatch-transactions (DynamoDB)
-│   └── Resolvers: listTransactions, getStats, notifyTransaction, onTransactionAdded
+│   ├── Data sources: txwatch-transactions + txwatch-transactions-dr
+│   └── Resolver parity: listTransactions, getStats, notifyTransaction, onTransactionAdded in both regions
 │
-├── aws_dynamodb_table.transactions
+├── aws_dynamodb_table.transactions + aws_dynamodb_table.transactions_dr
 │   ├── PK: TX#<uuid>, SK: <ISO-timestamp>
 │   ├── GSI: AllTransactionsIndex (entity_type, createdAt)
 │   └── GSI: CategoryTimestampIndex (category, createdAt)

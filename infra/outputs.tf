@@ -37,9 +37,12 @@ output "app_config" {
     }
 
     appsync = {
-      api_url      = module.api.api_url
-      realtime_url = module.api.realtime_url
-      api_key_id   = module.api.api_key_id
+      api_url         = module.api.api_url
+      realtime_url    = module.api.realtime_url
+      api_key_id      = module.api.api_key_id
+      dr_api_url      = module.api.dr_api_url
+      dr_realtime_url = module.api.dr_realtime_url
+      dr_api_key_id   = module.api.dr_api_key_id
     }
 
     cognito = {
@@ -88,6 +91,16 @@ output "appsync_url" {
 output "appsync_realtime_url" {
   description = "AppSync WebSocket endpoint for subscriptions"
   value       = module.api.realtime_url
+}
+
+output "appsync_dr_url" {
+  description = "DR AppSync GraphQL endpoint"
+  value       = module.api.dr_api_url
+}
+
+output "appsync_dr_realtime_url" {
+  description = "DR AppSync WebSocket endpoint for subscriptions"
+  value       = module.api.dr_realtime_url
 }
 
 output "cognito_user_pool_id" {
