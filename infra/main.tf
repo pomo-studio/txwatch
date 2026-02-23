@@ -350,7 +350,8 @@ resource "aws_iam_role_policy" "enricher_appsync" {
       Effect = "Allow"
       Action = "appsync:GraphQL"
       Resource = [
-        "${module.api.graphql_field_arn_prefix}/Mutation/fields/notifyTransaction"
+        "${module.api.graphql_field_arn_prefix}/Mutation/fields/notifyTransaction",
+        "${module.api.graphql_field_arn_prefix}/Transaction/fields/*"
       ]
     }]
   })
