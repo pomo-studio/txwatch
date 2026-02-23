@@ -118,64 +118,22 @@ resource "aws_dynamodb_table" "transactions" {
 }
 
 # =============================================================================
-# 3. Cognito User Pool
 # =============================================================================
 
-resource "aws_cognito_user_pool" "main" {
-  provider = aws.primary
-  name     = "txwatch-users"
+module "auth" {
+  source = "git::https://github.com/pomo-studio/terraform-aws-cognito-auth.git?ref=1826bf9211f359ea7ed9c70a8efbfa09bd9f9a7c"
 
-  password_policy {
-    minimum_length    = 8
-    require_lowercase = true
-    require_numbers   = true
-    require_symbols   = false
-    require_uppercase = true
+  providers = {
+    aws = aws.primary
   }
 
-  schema {
-    attribute_data_type = "String"
-    name                = "email"
-    required            = true
-    mutable             = false
-  }
-
-  auto_verified_attributes = ["email"]
-
-  email_configuration {
-    email_sending_account = "COGNITO_DEFAULT"
-  }
+  name        = "txwatch-users"
+  client_name = "txwatch-app"
 
   tags = {
     Project   = "txwatch"
     ManagedBy = "terraform"
   }
-}
-
-resource "aws_cognito_user_pool_client" "main" {
-  provider     = aws.primary
-  name         = "txwatch-app"
-  user_pool_id = aws_cognito_user_pool.main.id
-
-  generate_secret = false
-
-  explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_USER_SRP_AUTH"
-  ]
-
-  allowed_oauth_flows_user_pool_client = false
-
-  token_validity_units {
-    access_token  = "hours"
-    id_token      = "hours"
-    refresh_token = "days"
-  }
-
-  access_token_validity  = 1
-  id_token_validity      = 1
-  refresh_token_validity = 30
 }
 
 # =============================================================================
@@ -192,7 +150,7 @@ module "api" {
   name   = "txwatch-api"
   schema = file("${path.module}/schema.graphql")
 
-  cognito_user_pool_arn = aws_cognito_user_pool.main.arn
+  cognito_user_pool_arn = module.auth.user_pool_arn
 
   additional_auth_modes = [
     { auth_type = "AWS_IAM" },
