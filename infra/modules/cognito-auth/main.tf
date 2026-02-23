@@ -43,6 +43,7 @@ resource "aws_cognito_user_pool_client" "main" {
   allowed_oauth_flows_user_pool_client = local.hosted_ui_enabled
   allowed_oauth_flows                  = local.hosted_ui_enabled ? ["code"] : []
   allowed_oauth_scopes                 = local.hosted_ui_enabled ? var.oauth_scopes : []
+  supported_identity_providers         = local.hosted_ui_enabled ? var.oauth_identity_providers : []
   callback_urls                        = local.hosted_ui_enabled ? var.oauth_callback_urls : []
   logout_urls                          = local.hosted_ui_enabled ? var.oauth_logout_urls : []
 

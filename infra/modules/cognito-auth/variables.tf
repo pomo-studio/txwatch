@@ -134,3 +134,9 @@ variable "oauth_scopes" {
   type        = list(string)
   default     = ["openid", "email", "profile"]
 }
+
+variable "oauth_identity_providers" {
+  description = "OAuth identity providers for Hosted UI"
+  type        = list(string)
+  default     = ["COGNITO"]
+}
