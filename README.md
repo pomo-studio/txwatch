@@ -21,16 +21,16 @@ in one coherent application.
 ## Event flow
 
 ```
-User clicks "New Transaction"      Scheduler (every 30s)
+User clicks "New Transaction"      Scheduler (every 1m)
               │                          │
               ▼                          ▼
-     /api/tx (SSR route)      generator Lambda
-     events:PutEvents         events:PutEvents
+   /api/tx (Nuxt server route) generator Lambda
+      events:PutEvents         events:PutEvents
               │                          │
               └──────────────────────────┘
-                     txwatch-bus
-                          │
-                       SQS queue
+               txwatch-enricher-bus
+                           │
+                        SQS queue
                           │
                   enricher Lambda
                   ├── enrich + score
@@ -44,9 +44,10 @@ User clicks "New Transaction"      Scheduler (every 30s)
 
 | Module | Version | Role |
 |--------|---------|------|
-| `pomo-studio/serverless-ssr/aws` | `~> 2.2` | CloudFront + Lambda SSR frontend |
-| `pomo-studio/event-pipeline/aws` | `~> 1.1` | EventBridge → SQS → Lambda enricher |
-| `pomo-studio/appsync/aws` | `~> 1.0` | GraphQL API + real-time subscriptions |
+| `pomo-studio/serverless-ssr/aws` | `= 2.4.7` | CloudFront + Lambda SSR frontend |
+| `terraform-aws-event-bus` | `v1.0.0` | EventBridge custom bus |
+| `terraform-aws-event-consumer` | `v1.0.0` | SQS + enricher Lambda consumer |
+| `terraform-aws-appsync` | `git (pinned commit)` | GraphQL API + real-time subscriptions |
 | `pomo-studio/workspace/tfe` | `~> 1.0` | TFC workspace (managed in pomo core) |
 | `pomo-studio/oidc/aws` | `~> 2.0` | OIDC auth for TFC + GitHub Actions |
 
@@ -63,7 +64,7 @@ txwatch/
 │       └── generator/   Random transaction generator
 ├── app/                 Nuxt 3 application
 │   ├── pages/           index.vue, login.vue, about.vue
-│   ├── server/api/      health, tx (POST), txfeed (GET)
+│   ├── server/api/      health, tx (GET/POST), txfeed (GET), auth/*
 │   ├── composables/     useTransactions (AppSync subscription)
 │   └── middleware/      auth.ts (server-side auth guard)
 ├── config/              infra-outputs.json (committed, synced by CI)
@@ -82,7 +83,7 @@ export APPSYNC_URL=...
 export APPSYNC_API_KEY=...
 export COGNITO_USER_POOL_ID=...
 export COGNITO_CLIENT_ID=...
-export EVENT_BUS_NAME=txwatch-bus
+export EVENT_BUS_NAME=txwatch-enricher-bus
 
 # 4. Run dev server (uses real AWS)
 cd app && npm install && npm run dev
@@ -95,4 +96,4 @@ Automated via GitHub Actions on push to `main`:
 - `deploy.yml` — OIDC deploy to Lambda + CloudFront invalidation
 - `sync-infra-config.yml` — commits terraform outputs after TFC apply
 
-See [docs/architecture.md](docs/architecture.md) for full architecture details.
+See [docs/architecture.md](docs/architecture.md) for full architecture details and current auth/API boundaries.

@@ -16,13 +16,17 @@ TxWatch is a real-time transaction monitoring dashboard that serves two purposes
 ```
 txwatch infra/main.tf
 │
-├── module.ssr (serverless-ssr ~> 2.2)
+├── module.ssr (serverless-ssr = 2.4.7)
 │   ├── CloudFront → txwatch.pomo.dev
 │   ├── Lambda SSR (us-east-1 primary, us-west-2 DR)
 │   ├── S3 static assets
 │   └── DynamoDB txwatch-visits (page visit counter)
 │
-├── module.api (appsync ~> 1.0)
+├── module.auth (cognito-auth local module)
+│   ├── User pool + app client
+│   └── Hosted UI domain + oauth callback/logout wiring
+│
+├── module.api (terraform-aws-appsync pinned commit)
 │   ├── AppSync API: txwatch-api
 │   ├── Auth: Cognito (primary) + AWS_IAM + API_KEY
 │   ├── Data source: txwatch-transactions (DynamoDB)
@@ -33,8 +37,8 @@ txwatch infra/main.tf
 │   ├── GSI: AllTransactionsIndex (entity_type, createdAt)
 │   └── GSI: CategoryTimestampIndex (category, createdAt)
 │
-├── module.ingest_pipeline (event-pipeline ~> 1.1)
-│   ├── Custom bus: txwatch-bus
+├── module.ingest_bus + module.ingest_consumer (event-bus/event-consumer v1.0.0)
+│   ├── Custom bus: txwatch-enricher-bus
 │   ├── Rule: source = ["txwatch.transactions"]
 │   ├── SQS main queue + DLQ
 │   ├── Lambda: txwatch-enricher (enrichment + fraud scoring + AppSync mutation)
@@ -42,14 +46,15 @@ txwatch infra/main.tf
 │
 ├── aws_lambda_function.generator
 │   ├── Generates random transactions
-│   └── Invoked by EventBridge Scheduler every 30s
+│   └── Invoked by EventBridge Scheduler every 1 minute
 │
 ├── aws_scheduler_schedule.generator
-│   └── rate(30 seconds) → generator Lambda
+│   └── rate(1 minute) → generator Lambda
 │
-└── aws_cognito_user_pool.main
-    ├── txwatch-users
-    └── Self-service signup (email + password, Cognito default email)
+└── Cognito Hosted UI flow
+    ├── /api/auth/redirect -> Cognito login
+    ├── /api/auth/callback -> app session cookie
+    └── /api/auth/signout -> Cognito logout + cookie clear
 ```
 
 ## Auth model
@@ -57,9 +62,20 @@ txwatch infra/main.tf
 | Actor | Auth mode | AppSync operations |
 |-------|-----------|-------------------|
 | Browser (Cognito JWT) | `userPool` | WebSocket subscription (`onTransactionAdded`) |
-| SSR Lambda | `apiKey` | `listTransactions` query (server-side page render) |
+| Nuxt server route | `apiKey` | `listTransactions` query (server-side feed query) |
 | Enricher Lambda | `iam` (sigv4) | `notifyTransaction` mutation |
 | Generator Lambda | IAM execution role | `events:PutEvents` only (no AppSync) |
+
+## Route ownership
+
+| Route | Method | Owner | Purpose |
+|-------|--------|-------|---------|
+| `/api/auth/redirect` | GET | Nuxt server | Start Cognito Hosted UI login |
+| `/api/auth/callback` | GET | Nuxt server | Exchange code and set session cookie |
+| `/api/auth/signout` | GET | Nuxt server | Clear session + redirect to Cognito logout |
+| `/api/tx` | GET/POST | Nuxt server | Publish manual transaction event to EventBridge |
+| `/api/txfeed` | GET | Nuxt server | Query initial transaction feed from AppSync |
+| `onTransactionAdded` | WebSocket | AppSync | Push realtime transaction updates to browser |
 
 ## Data model
 
