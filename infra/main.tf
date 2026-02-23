@@ -117,6 +117,54 @@ resource "aws_dynamodb_table" "transactions" {
   }
 }
 
+resource "aws_dynamodb_table" "transactions_dr" {
+  provider     = aws.dr
+  name         = "txwatch-transactions-dr"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "PK"
+  range_key    = "SK"
+
+  attribute {
+    name = "PK"
+    type = "S"
+  }
+  attribute {
+    name = "SK"
+    type = "S"
+  }
+  attribute {
+    name = "entity_type"
+    type = "S"
+  }
+  attribute {
+    name = "category"
+    type = "S"
+  }
+  attribute {
+    name = "createdAt"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "AllTransactionsIndex"
+    hash_key        = "entity_type"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "CategoryTimestampIndex"
+    hash_key        = "category"
+    range_key       = "createdAt"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Project   = "txwatch"
+    ManagedBy = "terraform"
+  }
+}
+
 # =============================================================================
 # =============================================================================
 
@@ -176,11 +224,19 @@ module "api" {
 
   enable_api_key       = true
   api_key_expires_days = 365
+  enable_dr            = true
 
   dynamodb_data_sources = {
     transactions = {
       table_name = aws_dynamodb_table.transactions.name
       table_arn  = aws_dynamodb_table.transactions.arn
+    }
+  }
+
+  dr_dynamodb_data_sources = {
+    transactions = {
+      table_name = aws_dynamodb_table.transactions_dr.name
+      table_arn  = aws_dynamodb_table.transactions_dr.arn
     }
   }
 
@@ -240,6 +296,62 @@ resource "aws_appsync_resolver" "on_transaction_added" {
   type        = "Subscription"
   field       = "onTransactionAdded"
   data_source = module.api.none_data_source_name
+
+  runtime {
+    name            = "APPSYNC_JS"
+    runtime_version = "1.0.0"
+  }
+  code = file("${path.module}/resolvers/onTransactionAdded.js")
+}
+
+resource "aws_appsync_resolver" "list_transactions_dr" {
+  provider    = aws.dr
+  api_id      = module.api.dr_api_id
+  type        = "Query"
+  field       = "listTransactions"
+  data_source = module.api.dr_data_source_names["transactions"]
+
+  runtime {
+    name            = "APPSYNC_JS"
+    runtime_version = "1.0.0"
+  }
+  code = file("${path.module}/resolvers/listTransactions.js")
+}
+
+resource "aws_appsync_resolver" "get_stats_dr" {
+  provider    = aws.dr
+  api_id      = module.api.dr_api_id
+  type        = "Query"
+  field       = "getStats"
+  data_source = module.api.dr_data_source_names["transactions"]
+
+  runtime {
+    name            = "APPSYNC_JS"
+    runtime_version = "1.0.0"
+  }
+  code = file("${path.module}/resolvers/getStats.js")
+}
+
+resource "aws_appsync_resolver" "notify_transaction_dr" {
+  provider    = aws.dr
+  api_id      = module.api.dr_api_id
+  type        = "Mutation"
+  field       = "notifyTransaction"
+  data_source = module.api.dr_none_data_source_name
+
+  runtime {
+    name            = "APPSYNC_JS"
+    runtime_version = "1.0.0"
+  }
+  code = file("${path.module}/resolvers/notifyTransaction.js")
+}
+
+resource "aws_appsync_resolver" "on_transaction_added_dr" {
+  provider    = aws.dr
+  api_id      = module.api.dr_api_id
+  type        = "Subscription"
+  field       = "onTransactionAdded"
+  data_source = module.api.dr_none_data_source_name
 
   runtime {
     name            = "APPSYNC_JS"

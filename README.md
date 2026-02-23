@@ -59,7 +59,7 @@ txwatch/
 ├── infra/               Terraform (deployed via TFC workspace txwatch)
 │   ├── main.tf          All module instantiations
 │   ├── schema.graphql   AppSync GraphQL schema
-│   ├── resolvers/       AppSync JS resolvers (4 files)
+│   ├── resolvers/       AppSync JS resolvers (primary + DR parity)
 │   └── lambda/
 │       ├── enricher/    EventBridge → DynamoDB → AppSync
 │       └── generator/   Random transaction generator
@@ -69,7 +69,7 @@ txwatch/
 │   ├── composables/     useTransactions (AppSync subscription)
 │   └── middleware/      auth.ts (server-side auth guard)
 ├── config/              infra-outputs.json (committed, synced by CI)
-└── scripts/             deploy.sh
+└── scripts/             deploy.sh, smoke-appsync-failover.sh
 ```
 
 ## Development
