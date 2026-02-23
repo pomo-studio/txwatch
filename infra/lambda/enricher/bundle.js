@@ -30682,17 +30682,19 @@ __export(index_exports, {
   handler: () => handler
 });
 module.exports = __toCommonJS(index_exports);
-var import_client_dynamodb = __toESM(require_dist_cjs69(), 1);
-var import_lib_dynamodb = __toESM(require_dist_cjs71(), 1);
-var import_credential_provider_env = __toESM(require_dist_cjs44(), 1);
-var import_signature_v42 = __toESM(require_dist_cjs29(), 1);
-var import_sha256_js = __toESM(require_main2(), 1);
-var import_node_https = __toESM(require("node:https"), 1);
-var import_node_crypto = __toESM(require("node:crypto"), 1);
+var import_client_dynamodb = __toESM(require_dist_cjs69());
+var import_lib_dynamodb = __toESM(require_dist_cjs71());
+var import_credential_provider_env = __toESM(require_dist_cjs44());
+var import_signature_v42 = __toESM(require_dist_cjs29());
+var import_sha256_js = __toESM(require_main2());
+var import_node_https = __toESM(require("node:https"));
+var import_node_crypto = __toESM(require("node:crypto"));
 var REGION = process.env.AWS_REGION || "us-east-1";
 var DYNAMODB_TABLE = process.env.DYNAMODB_TABLE;
 var APPSYNC_URL = process.env.APPSYNC_URL;
-var dynamo = import_lib_dynamodb.DynamoDBDocumentClient.from(new import_client_dynamodb.DynamoDBClient({ region: REGION }));
+var DR_APPSYNC_URL = process.env.DR_APPSYNC_URL;
+var DR_REGION = process.env.DR_REGION || "us-west-2";
+var dynamoPrimary = import_lib_dynamodb.DynamoDBDocumentClient.from(new import_client_dynamodb.DynamoDBClient({ region: REGION }));
 var MERCHANTS = {
   grocery: ["Whole Foods Market", "Trader Joe's", "Kroger", "Safeway", "Publix", "Aldi", "Costco"],
   restaurant: ["Chipotle", "McDonald's", "Starbucks", "Panera Bread", "Shake Shack", "The Cheesecake Factory"],
@@ -30719,9 +30721,9 @@ function calculateRiskScore(detail) {
   if (hour < 6 || hour >= 22) score += 10;
   return Math.min(score, 100);
 }
-async function writeToDynamo(tx) {
-  await dynamo.send(new import_lib_dynamodb.PutCommand({
-    TableName: DYNAMODB_TABLE,
+async function writeToDynamo(tableName, client, tx) {
+  await client.send(new import_lib_dynamodb.PutCommand({
+    TableName: tableName,
     Item: {
       PK: `TX#${tx.transactionId}`,
       SK: tx.createdAt,
@@ -30731,7 +30733,6 @@ async function writeToDynamo(tx) {
   }));
 }
 async function callAppSync(tx) {
-  const endpoint = new URL(APPSYNC_URL);
   const mutation = (
     /* GraphQL */
     `
@@ -30754,6 +30755,24 @@ async function callAppSync(tx) {
     }
   `
   );
+  return callSignedAppSync(APPSYNC_URL, REGION, mutation, tx);
+}
+async function callDrReplication(tx) {
+  if (!DR_APPSYNC_URL) return;
+  const mutation = (
+    /* GraphQL */
+    `
+    mutation ReplicateTransaction($input: TransactionInput!) {
+      replicateTransaction(input: $input) {
+        transactionId
+      }
+    }
+  `
+  );
+  return callSignedAppSync(DR_APPSYNC_URL, DR_REGION, mutation, tx);
+}
+async function callSignedAppSync(url, region, mutation, tx) {
+  const endpoint = new URL(url);
   const body = JSON.stringify({
     query: mutation,
     variables: {
@@ -30776,7 +30795,7 @@ async function callAppSync(tx) {
   });
   const signer = new import_signature_v42.SignatureV4({
     credentials: (0, import_credential_provider_env.fromEnv)(),
-    region: REGION,
+    region,
     service: "appsync",
     sha256: import_sha256_js.Sha256
   });
@@ -30802,9 +30821,20 @@ async function callAppSync(tx) {
       let data2 = "";
       res.on("data", (chunk) => data2 += chunk);
       res.on("end", () => {
-        const parsed = JSON.parse(data2);
-        if (parsed.errors) {
-          console.error("AppSync errors:", JSON.stringify(parsed.errors));
+        let parsed;
+        try {
+          parsed = JSON.parse(data2);
+        } catch {
+          reject(new Error(`AppSync ${url} returned non-JSON response`));
+          return;
+        }
+        if ((res.statusCode || 500) >= 400) {
+          reject(new Error(`AppSync ${url} HTTP ${res.statusCode}: ${JSON.stringify(parsed)}`));
+          return;
+        }
+        if (parsed.errors && parsed.errors.length > 0) {
+          reject(new Error(`AppSync ${url} GraphQL errors: ${JSON.stringify(parsed.errors)}`));
+          return;
         }
         resolve(parsed);
       });
@@ -30852,10 +30882,12 @@ async function handler(event) {
       createdAt: now
     };
     try {
-      await writeToDynamo(tx);
-      console.log(`[enricher] wrote ${txId} to DynamoDB`);
+      await writeToDynamo(DYNAMODB_TABLE, dynamoPrimary, tx);
+      console.log(`[enricher] wrote ${txId} to DynamoDB primary`);
       await callAppSync(tx);
       console.log(`[enricher] notified AppSync for ${txId}`);
+      await callDrReplication(tx);
+      console.log(`[enricher] replicated ${txId} into DR AppSync`);
       results.push({ txId, success: true });
     } catch (err2) {
       console.error(`[enricher] failed for ${txId}:`, err2);
