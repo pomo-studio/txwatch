@@ -88,9 +88,28 @@ Interpretation:
 
 - **Confirmed good**: endpoint cutover + rollback health checks.
 - **Confirmed good**: API-key authorization for server-side read queries.
-- **Still open**: DR data parity is not yet observable via `listTransactions`.
+- **Resolved in-session**: DR data parity now observable via `listTransactions`.
 
-Most likely next diagnostic step is CloudWatch log inspection for `txwatch-enricher` to confirm DR replication call result path (IAM denial vs mutation/runtime error).
+Root cause discovered:
+
+- `infra/lambda/enricher/index.js` had DR replication logic, but deployed Lambda still used stale `infra/lambda/enricher/bundle.js`.
+- Bundle was rebuilt from source and deployed.
+
+Deployment run:
+
+- `run-d6EjAdZYLJjvMsYY` (`applied`) — refreshed enricher bundle with DR replication logic.
+
+Post-fix parity verification:
+
+- `baseline_primary`: PASS, `200`, `0.136384s`, `count=5`, `firstTx=56e99954-2f53-4fa0-9ff7-02937b6c1433`
+- `cutover_dr`: PASS, `200`, `0.305775s`, `count=1`, `firstTx=56e99954-2f53-4fa0-9ff7-02937b6c1433`
+- `rollback_primary`: PASS, `200`, `0.153834s`, `count=5`, `firstTx=56e99954-2f53-4fa0-9ff7-02937b6c1433`
+
+Interpretation:
+
+- DR endpoint is healthy.
+- DR query auth is healthy.
+- DR data parity path is operational (same transaction ID visible in DR).
 
 Reference business query gate:
 
