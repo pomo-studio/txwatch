@@ -20,3 +20,15 @@ variable "environment" {
   type        = string
   default     = "prod"
 }
+
+variable "cognito_domain_prefix" {
+  description = "Cognito Hosted UI domain prefix"
+  type        = string
+  default     = "txwatch-137064409667"
+}
+
+variable "app_base_url" {
+  description = "Public application base URL"
+  type        = string
+  default     = "https://txwatch.pomo.dev"
+}
