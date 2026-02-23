@@ -43,9 +43,9 @@ output "app_config" {
     }
 
     cognito = {
-      user_pool_id     = aws_cognito_user_pool.main.id
-      user_pool_region = var.primary_region
-      client_id        = aws_cognito_user_pool_client.main.id
+      user_pool_id     = module.auth.user_pool_id
+      user_pool_region = module.auth.region
+      client_id        = module.auth.client_id
     }
 
     event_pipeline = {
@@ -87,12 +87,12 @@ output "appsync_realtime_url" {
 
 output "cognito_user_pool_id" {
   description = "Cognito User Pool ID"
-  value       = aws_cognito_user_pool.main.id
+  value       = module.auth.user_pool_id
 }
 
 output "cognito_client_id" {
   description = "Cognito User Pool Client ID"
-  value       = aws_cognito_user_pool_client.main.id
+  value       = module.auth.client_id
 }
 
 output "event_bus_name" {
