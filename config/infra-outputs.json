@@ -9,6 +9,9 @@
           {
             "api_key_id": "string",
             "api_url": "string",
+            "dr_api_key_id": "string",
+            "dr_api_url": "string",
+            "dr_realtime_url": "string",
             "realtime_url": "string"
           }
         ],
@@ -84,6 +87,9 @@
       "appsync": {
         "api_key_id": "z6msgaslozem5pzkjp2ei4rile:da2-px7vsulcsnaabkkxnyiu3yrg7e",
         "api_url": "https://gbzdn3wpgnemlpdi42v7np6ltq.appsync-api.us-east-1.amazonaws.com/graphql",
+        "dr_api_key_id": "ymjz3g6vszdfzdvmrv3yssbv4q:da2-gkoobvvlcnbvjkhnn7cg227ggy",
+        "dr_api_url": "https://gqcapa4mrbernf4y3w7357ghyu.appsync-api.us-west-2.amazonaws.com/graphql",
+        "dr_realtime_url": "wss://gqcapa4mrbernf4y3w7357ghyu.appsync-realtime-api.us-west-2.amazonaws.com/graphql",
         "realtime_url": "wss://gbzdn3wpgnemlpdi42v7np6ltq.appsync-realtime-api.us-east-1.amazonaws.com/graphql"
       },
       "cloudfront": {
@@ -134,6 +140,16 @@
     "sensitive": false,
     "type": "string",
     "value": "https://txwatch.pomo.dev"
+  },
+  "appsync_dr_realtime_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "wss://gqcapa4mrbernf4y3w7357ghyu.appsync-realtime-api.us-west-2.amazonaws.com/graphql"
+  },
+  "appsync_dr_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://gqcapa4mrbernf4y3w7357ghyu.appsync-api.us-west-2.amazonaws.com/graphql"
   },
   "appsync_realtime_url": {
     "sensitive": false,
