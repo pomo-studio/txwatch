@@ -17,8 +17,7 @@ data "aws_region" "primary" {
 # =============================================================================
 # CloudFront → Lambda SSR (us-east-1 + us-west-2) + S3 static assets
 module "ssr" {
-  source  = "pomo-studio/serverless-ssr/aws"
-  version = "= 2.4.14"
+  source = "git::https://github.com/pomo-studio/terraform-aws-serverless-ssr.git?ref=v2.4.15"
 
   providers = {
     aws.primary = aws.primary
