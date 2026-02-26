@@ -68,7 +68,7 @@ output "app_config" {
     }
 
     dynamodb = {
-      table_name = aws_dynamodb_table.transactions.name
+      table_name = module.transactions_primary.table_name_primary
     }
   }
 }

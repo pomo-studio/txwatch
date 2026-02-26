@@ -16,11 +16,9 @@ data "aws_region" "primary" {
 # 1. SSR Frontend (serverless-ssr module)
 # =============================================================================
 # CloudFront → Lambda SSR (us-east-1 + us-west-2) + S3 static assets
-# enable_dynamo = true creates the txwatch-visits table (page visit counter)
-
 module "ssr" {
   source  = "pomo-studio/serverless-ssr/aws"
-  version = "= 2.4.7"
+  version = "= 2.4.13"
 
   providers = {
     aws.primary = aws.primary
@@ -31,7 +29,7 @@ module "ssr" {
   domain_name     = "pomo.dev"
   subdomain       = "txwatch"
   route53_managed = true
-  enable_dynamo   = true
+  enable_dynamo   = false
 
   create_ci_cd_user = false
 
@@ -69,98 +67,72 @@ resource "aws_iam_role_policy" "ssr_eventbridge" {
 # GSI AllTransactionsIndex enables efficient time-sorted queries.
 # GSI CategoryTimestampIndex enables category analytics.
 
-resource "aws_dynamodb_table" "transactions" {
-  provider         = aws.primary
-  name             = "txwatch-transactions"
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "PK"
-  range_key        = "SK"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
+locals {
+  txwatch_transactions_attributes = [
+    { name = "PK", type = "S" },
+    { name = "SK", type = "S" },
+    { name = "entity_type", type = "S" },
+    { name = "category", type = "S" },
+    { name = "createdAt", type = "S" }
+  ]
 
-  attribute {
-    name = "PK"
-    type = "S"
-  }
-  attribute {
-    name = "SK"
-    type = "S"
-  }
-  attribute {
-    name = "entity_type"
-    type = "S"
-  }
-  attribute {
-    name = "category"
-    type = "S"
-  }
-  attribute {
-    name = "createdAt"
-    type = "S"
-  }
+  txwatch_transactions_gsis = [
+    {
+      name            = "AllTransactionsIndex"
+      hash_key        = "entity_type"
+      range_key       = "createdAt"
+      projection_type = "ALL"
+    },
+    {
+      name            = "CategoryTimestampIndex"
+      hash_key        = "category"
+      range_key       = "createdAt"
+      projection_type = "ALL"
+    }
+  ]
+}
 
-  global_secondary_index {
-    name            = "AllTransactionsIndex"
-    hash_key        = "entity_type"
-    range_key       = "createdAt"
-    projection_type = "ALL"
+module "transactions_primary" {
+  source  = "pomo-studio/dynamodb-global-table/aws"
+  version = "= 1.0.0"
+
+  providers = {
+    aws.primary = aws.primary
+    aws.dr      = aws.dr
   }
 
-  global_secondary_index {
-    name            = "CategoryTimestampIndex"
-    hash_key        = "category"
-    range_key       = "createdAt"
-    projection_type = "ALL"
-  }
-
+  name                     = "txwatch-transactions"
+  hash_key                 = "PK"
+  range_key                = "SK"
+  attributes               = local.txwatch_transactions_attributes
+  global_secondary_indexes = local.txwatch_transactions_gsis
+  enable_dr                = false
+  enable_pitr              = false
+  enable_streams           = true
+  stream_view_type         = "NEW_AND_OLD_IMAGES"
   tags = {
     Project   = "txwatch"
     ManagedBy = "terraform"
   }
 }
 
-resource "aws_dynamodb_table" "transactions_dr" {
-  provider     = aws.dr
-  name         = "txwatch-transactions-dr"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "PK"
-  range_key    = "SK"
+module "transactions_dr" {
+  source  = "pomo-studio/dynamodb-global-table/aws"
+  version = "= 1.0.0"
 
-  attribute {
-    name = "PK"
-    type = "S"
-  }
-  attribute {
-    name = "SK"
-    type = "S"
-  }
-  attribute {
-    name = "entity_type"
-    type = "S"
-  }
-  attribute {
-    name = "category"
-    type = "S"
-  }
-  attribute {
-    name = "createdAt"
-    type = "S"
+  providers = {
+    aws.primary = aws.dr
+    aws.dr      = aws.dr
   }
 
-  global_secondary_index {
-    name            = "AllTransactionsIndex"
-    hash_key        = "entity_type"
-    range_key       = "createdAt"
-    projection_type = "ALL"
-  }
-
-  global_secondary_index {
-    name            = "CategoryTimestampIndex"
-    hash_key        = "category"
-    range_key       = "createdAt"
-    projection_type = "ALL"
-  }
-
+  name                     = "txwatch-transactions-dr"
+  hash_key                 = "PK"
+  range_key                = "SK"
+  attributes               = local.txwatch_transactions_attributes
+  global_secondary_indexes = local.txwatch_transactions_gsis
+  enable_dr                = false
+  enable_pitr              = false
+  enable_streams           = false
   tags = {
     Project   = "txwatch"
     ManagedBy = "terraform"
@@ -230,15 +202,15 @@ module "api" {
 
   dynamodb_data_sources = {
     transactions = {
-      table_name = aws_dynamodb_table.transactions.name
-      table_arn  = aws_dynamodb_table.transactions.arn
+      table_name = module.transactions_primary.table_name_primary
+      table_arn  = module.transactions_primary.table_arn_primary
     }
   }
 
   dr_dynamodb_data_sources = {
     transactions = {
-      table_name = aws_dynamodb_table.transactions_dr.name
-      table_arn  = aws_dynamodb_table.transactions_dr.arn
+      table_name = module.transactions_dr.table_name_primary
+      table_arn  = module.transactions_dr.table_arn_primary
     }
   }
 
@@ -432,7 +404,7 @@ module "ingest_consumer" {
   lambda_memory_size = 256
 
   lambda_environment_variables = {
-    DYNAMODB_TABLE = aws_dynamodb_table.transactions.name
+    DYNAMODB_TABLE = module.transactions_primary.table_name_primary
     APPSYNC_URL    = module.api.api_url
     DR_APPSYNC_URL = module.api.dr_api_url
     DR_REGION      = var.dr_region
@@ -450,7 +422,7 @@ module "ingest_consumer" {
     ManagedBy = "terraform"
   }
 
-  depends_on = [aws_dynamodb_table.transactions, module.api]
+  depends_on = [module.transactions_primary, module.api]
 }
 
 # Grant enricher Lambda permission to write enriched transactions to DynamoDB
@@ -469,11 +441,11 @@ resource "aws_iam_role_policy" "enricher_dynamodb" {
         "dynamodb:UpdateItem",
         "dynamodb:GetItem"
       ]
-      Resource = aws_dynamodb_table.transactions.arn
+      Resource = module.transactions_primary.table_arn_primary
     }]
   })
 
-  depends_on = [module.ingest_consumer, aws_dynamodb_table.transactions]
+  depends_on = [module.ingest_consumer, module.transactions_primary]
 }
 
 # Grant enricher Lambda permission to call AppSync notifyTransaction mutation

@@ -97,3 +97,13 @@ import {
   to = module.ingest_consumer.aws_cloudwatch_log_group.lambda_primary[0]
   id = "/aws/lambda/txwatch-enricher-processor"
 }
+
+moved {
+  from = aws_dynamodb_table.transactions
+  to   = module.transactions_primary.aws_dynamodb_table.primary
+}
+
+moved {
+  from = aws_dynamodb_table.transactions_dr
+  to   = module.transactions_dr.aws_dynamodb_table.primary
+}
