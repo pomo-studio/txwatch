@@ -13,7 +13,7 @@ TxWatch is a real-time transaction monitoring dashboard that serves two purposes
 
 ## Infrastructure diagram
 
-```
+```text
 txwatch infra/main.tf
 │
 ├── module.ssr (serverless-ssr = 2.4.7)
@@ -81,7 +81,7 @@ txwatch infra/main.tf
 
 ### txwatch-transactions
 
-```
+```text
 PK: TX#<uuid-v4>
 SK: <ISO-8601-timestamp>
 
