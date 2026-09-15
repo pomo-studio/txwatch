@@ -2,10 +2,12 @@
   <div class="min-h-screen bg-canvas flex items-center justify-center px-4">
     <div class="w-full max-w-sm">
       <div class="mb-8">
-        <p class="text-xs font-display tracking-widest2 text-ink/40 uppercase mb-2">postmodern.</p>
+        <p class="text-xs font-display tracking-widest2 text-ink/40 uppercase mb-2">postmodern.tf demo</p>
         <h1 class="text-2xl font-display font-medium text-ink">TxWatch</h1>
-        <p class="text-sm text-ink/50 mt-1">Real-time transaction monitoring</p>
+        <p class="text-sm text-ink/50 mt-1">Real-time transaction monitoring demo</p>
       </div>
+
+      <p class="mb-6 text-sm text-ink/60">By <a href="https://pomo.studio" class="underline">André Pitanga</a>, using <a href="https://pomo.dev" class="underline">postmodern.tf</a>.</p>
 
       <a
         href="/api/auth/redirect"
