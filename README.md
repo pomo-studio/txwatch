@@ -2,9 +2,8 @@
 
 Real-time transaction monitoring demo at **txwatch.pomo.dev**.
 
-TxWatch is a full-stack fintech reference implementation that exercises every
-[pomo-studio](https://registry.terraform.io/namespaces/pomo-studio) Terraform module
-in one coherent application.
+TxWatch combines [postmodern.tf](https://pomo.dev) components in a working
+example of event-driven transaction monitoring on AWS.
 
 > Private repository — pomo-studio/txwatch
 
@@ -20,7 +19,7 @@ in one coherent application.
 
 ## Event flow
 
-```
+```text
 User clicks "New Transaction"      Scheduler (every 1m)
               │                          │
               ▼                          ▼
@@ -54,7 +53,7 @@ User clicks "New Transaction"      Scheduler (every 1m)
 
 ## Repository structure
 
-```
+```text
 txwatch/
 ├── infra/               Terraform (deployed via TFC workspace txwatch)
 │   ├── main.tf          All module instantiations
@@ -93,8 +92,12 @@ cd app && npm install && npm run dev
 ## Deployment
 
 Automated via GitHub Actions on push to `main`:
+
 - `ci.yml` — lint, typecheck, build
 - `deploy.yml` — OIDC deploy to Lambda + CloudFront invalidation
 - `sync-infra-config.yml` — commits terraform outputs after TFC apply
 
 See [docs/architecture.md](docs/architecture.md) for full architecture details and current auth/API boundaries.
+
+A transaction-monitoring demo by [André Pitanga](https://pomo.studio), built with
+[postmodern.tf](https://pomo.dev) components.

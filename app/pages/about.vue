@@ -12,9 +12,9 @@
       <p class="text-xs font-display tracking-widest2 text-ink/40 uppercase mb-4">Architecture</p>
       <h1 class="text-3xl font-display font-medium text-ink mb-4">How TxWatch works</h1>
       <p class="text-ink/60 text-sm leading-relaxed mb-12">
-        TxWatch is a living reference implementation that exercises every pomo-studio
-        Terraform module in one coherent application — a plausible, production-shaped
-        fintech demo.
+        TxWatch is a transaction-monitoring demo by André Pitanga. It brings together
+        postmodern.tf components to explore event-driven applications on AWS, from
+        receiving events to updating a live dashboard.
       </p>
 
       <!-- Event flow -->
